@@ -27,12 +27,12 @@ BGProcess.LifeDisplay = function(args) {
             ctx.drawImage(grid_lines, 0, 0);
         },
 
-        resize: function(newSize) {
+        resize: function(new_size) {
             var grid_ctx;
 
-            size = newSize;
-            width = args.canvas.width / newSize;
-            height = args.canvas.height / newSize;
+            size = new_size;
+            width = args.canvas.width / new_size;
+            height = args.canvas.height / new_size;
 
             location_lookup = $R(0, size * size).collect(function(index) {
                 return [(index % size) * width, Math.floor(index / size) * height];
@@ -98,17 +98,17 @@ BGProcess.LifeWorld = function(args) {
         },
 
         resize: function(new_size) {
-            var minSize = Math.min(size, new_size) - 1;
+            var self = this, new_grid, min_size = Math.min(this.size, new_size) - 1;
 
-            newGrid = empty_grid_sized(new_size);
-            $R(0, minSize).each(function(x) {
-                $R(0, minSize).each(function(y) {
-                    newGrid[y * new_size + x] = grid[this.index_for(x, y)];
+            new_grid = empty_grid_sized(new_size);
+            $R(0, min_size).each(function(x) {
+                $R(0, min_size).each(function(y) {
+                    new_grid[y * new_size + x] = self.alive(x, y);
                 });
             });
 
             this.size = new_size;
-            this.grid = newGrid;
+            this.grid = new_grid;
         }
     };
 };
@@ -191,8 +191,8 @@ BGProcess.GameOfLife = function(args) {
             population = 0;
         },
 
-        resize: function(newSize) {
-            world.resize(newSize * 1);
+        resize: function(new_size) {
+            world.resize(new_size * 1);
             size = world.size;
             compute_indices();
         }
@@ -202,7 +202,7 @@ BGProcess.GameOfLife = function(args) {
     self.reset();
 
     return self;
-}
+};
 
 BGProcess.Life = function(args) {
     var display = BGProcess.LifeDisplay({ canvas: args.canvas, size: 10 }),
