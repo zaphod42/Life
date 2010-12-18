@@ -62,7 +62,7 @@ BGProcess.LifeDisplay = function(args) {
 BGProcess.LifeWorld = function(args) {
     var size = args.size, grid, self,
         neighbor_lookup = [],
-        population = 0;
+        population;
 
     function wrap_boundary(val, boundary) {
         if (val === -1) { return boundary - 1; }
@@ -135,11 +135,19 @@ BGProcess.LifeWorld = function(args) {
         },
 
         toggle: function(x, y) {
-            grid[y * size + x] = !grid[y * size + x];
+            var index = y * size + x;
+            if (grid[index]) {
+                population -= 1;
+                grid[index] = 0;
+            } else {
+                population += 1;
+                grid[index] = 1;
+            }
         },
 
         reset: function() {
             grid = empty_grid_sized(size);
+            population = 0;
         },
 
         resize: function(newSize) {
