@@ -42,6 +42,7 @@ BGProcess.LifeDisplay = function(args) {
             grid_ctx = grid_lines.getContext('2d');
 
             grid_ctx.strokeStyle = 'lightgray';
+            grid_ctx.lineWidth = 0.25;
             grid_ctx.beginPath();
             $R(0, size + 1).each(function(line) {
                 grid_ctx.moveTo(line * width, 0); 
