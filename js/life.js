@@ -60,9 +60,11 @@ BGProcess.LifeDisplay = function(args) {
 };
 
 BGProcess.LifeWorld = function(args) {
-    var size = args.size, grid, self,
-        neighbor_lookup = [],
-        population;
+    function empty_grid_sized(s) {
+        var g = [];
+        (s * s).times(function() { g.push(0); });
+        return g;
+    }
 
     function wrap_boundary(val, boundary) {
         if (val === -1) { return boundary - 1; }
@@ -70,13 +72,58 @@ BGProcess.LifeWorld = function(args) {
         return val;
     }
 
-    function index_for(x, y) {
-        return wrap_boundary(x, size) + wrap_boundary(y, size) * size;
-    }
+    return {
+        grid: args.grid || empty_grid_sized(args.size),
+        size: args.size,
+
+        index_for: function(x, y) {
+            return wrap_boundary(x, this.size) + wrap_boundary(y, this.size) * this.size;
+        },
+
+        alive: function(x, y) {
+            return this.grid[this.index_for(x, y)];
+        },
+
+        toggle: function(x, y) {
+            var index = y * this.size + x;
+            if (this.grid[index]) {
+                this.grid[index] = 0;
+            } else {
+                this.grid[index] = 1;
+            }
+        },
+
+        reset: function() {
+            this.grid = empty_grid_sized(this.size);
+        },
+
+        resize: function(new_size) {
+            var minSize = Math.min(size, new_size) - 1;
+
+            newGrid = empty_grid_sized(new_size);
+            $R(0, minSize).each(function(x) {
+                $R(0, minSize).each(function(y) {
+                    newGrid[y * new_size + x] = grid[this.index_for(x, y)];
+                });
+            });
+
+            this.size = new_size;
+            this.grid = newGrid;
+        }
+    };
+};
+
+BGProcess.GameOfLife = function(args) {
+    var size = args.size, 
+        world = BGProcess.LifeWorld({ size: size }),
+        self,
+        neighbor_lookup = [],
+        population;
 
     function neighbors(index) {
         var x = index % size,
-            y = Math.floor(index / size);
+            y = Math.floor(index / size),
+            index_for = world.index_for.bind(world);
 
         return [index_for(x - 1, y - 1), index_for(x, y - 1), index_for(x + 1, y - 1),
                 index_for(x - 1, y),                          index_for(x + 1, y),
@@ -90,31 +137,27 @@ BGProcess.LifeWorld = function(args) {
         });
     }
 
-    function neighbor_count(index) {
+    function neighbor_count(grid, index) {
         var list = neighbor_lookup[index];
+
         return grid[list[0]] + grid[list[1]] + grid[list[2]] +
                grid[list[3]]         +         grid[list[4]] + 
                grid[list[5]] + grid[list[6]] + grid[list[7]];
     }
 
-    function empty_grid_sized(s) {
-        var g = [];
-        (s * s).times(function() { g.push(0); });
-        return g;
-    }
-
     self = {
-        grid: function() { return grid; },
+        grid: function() { return world.grid; },
         population: function() { return population; },
 
         step: function step() {
-            var i, newGrid = [], count, cell;
+            var i, newGrid = [], count, cell, grid = world.grid;
+
             population = 0;
             newGrid.length = grid.length;
 
             for (i = 0; i < grid.length; ++i) {
                 cell = grid[i];
-                count = neighbor_count(i);
+                count = neighbor_count(grid, i);
 
                 if (cell && count < 2) {
                     newGrid[i] = 0;
@@ -131,38 +174,26 @@ BGProcess.LifeWorld = function(args) {
                 }
             }
 
-            grid = newGrid;
+            world = BGProcess.LifeWorld({ size: size, grid: newGrid });
         },
 
         toggle: function(x, y) {
-            var index = y * size + x;
-            if (grid[index]) {
-                population -= 1;
-                grid[index] = 0;
-            } else {
+            world.toggle(x, y);
+            if (world.alive(x, y)) {
                 population += 1;
-                grid[index] = 1;
+            } else {
+                population -= 1;
             }
         },
 
         reset: function() {
-            grid = empty_grid_sized(size);
+            world.reset();
             population = 0;
         },
 
         resize: function(newSize) {
-            var safeSize = newSize * 1,
-                minSize = Math.min(size, safeSize) - 1;
-
-            newGrid = empty_grid_sized(safeSize);
-            $R(0, minSize).each(function(x) {
-                $R(0, minSize).each(function(y) {
-                    newGrid[y * safeSize + x] = grid[index_for(x, y)];
-                });
-            });
-
-            size = safeSize;
-            grid = newGrid;
+            world.resize(newSize * 1);
+            size = world.size;
             compute_indices();
         }
     };
@@ -179,7 +210,7 @@ BGProcess.Life = function(args) {
         population_output = args.population,
         
         generation = 0,
-        grid = BGProcess.LifeWorld({ size: 10 }),
+        grid = BGProcess.GameOfLife({ size: 10 }),
         self;
 
     self = {
