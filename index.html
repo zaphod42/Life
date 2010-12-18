@@ -1,0 +1,66 @@
+<html>
+    <head>
+        <script src="js/thirdparty/prototype.js"></script>
+        <script src="js/thirdparty/s2.js"></script>
+        <script src="js/life.js"></script>
+        <style>
+            body { background-color: black; color: #33FF33; }
+
+            #sidebar { float: left; width: 224px; }
+
+            .info { float: left; }
+            #generations, #population { float: left; margin: 2px; padding: 2px; width: 100px; border: 1px solid gray; }
+
+            #sizer { border: 1px solid gray; width: 219px; height: 10px; }
+            #sizer .ui-slider-handle { background-color: #33FF33; font-size: 10px; padding: 0 5px; position: relative; }
+        </style>
+    </head>
+    <body>
+        <form>
+            <div id="sidebar">
+                <div id="controls">
+                    <input type="button" id="start" value="Start">
+                    <input type="button" id="step" value="Step">
+                    <input type="button" id="stop" value="Stop">
+                    <input type="button" id="reset" value="Reset">
+                </div>
+                <div class="info">
+                    <div class="label">Generations:</div>
+                    <div id="generations"></div>
+                </div>
+                <div class="info">
+                    <div class="label">Population:</div>
+                    <div id="population"></div>
+                </div>
+                <div style="clear: both"></div>
+                <div class="info">
+                    <div class="label">Size:</div>
+                    <div id="sizer"></div>
+                    <div id="size"></div>
+                </div>
+            </div>
+            <canvas width="800" height="600" id="canvas"></canvas>
+        </form>
+        <script>
+            var life = BGProcess.Life({
+                canvas: $('canvas'),
+                generations: $('generations'),
+                population: $('population')
+            });
+
+            $('start').on('click', life.start.bind(life));
+            $('step').on('click', life.step.bind(life));
+            $('stop').on('click', life.stop.bind(life));
+            $('reset').on('click', life.reset.bind(life));
+            $('canvas').on('click', function(e) { 
+                var layout = e.element().getLayout();
+                life.spawn(e.pointerX() - layout.get('left'), e.pointerY() - layout.get('top')); 
+            });
+
+            new S2.UI.Slider($('sizer'), {
+                value: { min: 3, max: 100, initial: 10, step: 1 },
+                onChange: function(value) { life.resize(value); $('size').update(value); }
+            });
+        </script>
+    </body>
+</html>
