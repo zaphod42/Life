@@ -404,7 +404,7 @@ BGProcess.LifeLibrary = function(args) {
                     canvas.setStyle({ top: 0, left: 0 });
                 } 
             }); 
-        }).defer();
+        }).defer();  // Have to defer or else we don't have the right coordinates for some reason
     }
 
     shelf.each(drawPattern);
