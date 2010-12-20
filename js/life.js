@@ -11,6 +11,13 @@ BGProcess.LifeDisplay = function(args) {
             return { x: Math.floor(x / width), y: Math.floor(y / height) };
         },
 
+        contains: function(x, y) {
+            var layout = args.canvas.getLayout();
+
+            return x >= layout.get('left') && x <= layout.get('left') + layout.get('width') &&
+                   y >= layout.get('top') && y <= layout.get('top') + layout.get('height');
+        },
+
         draw: function draw(grid) {
             var i, x, y;
             ctx.clearRect(0, 0, args.canvas.width, args.canvas.height);
@@ -93,12 +100,27 @@ BGProcess.LifeWorld = function(args) {
             }
         },
 
+        blit: function(x, y, pattern) {
+            var self = this, 
+                otherWorld = pattern.world(),
+                width = Math.min(this.size, x + otherWorld.size) - 1,
+                height = Math.min(this.size, y + otherWorld.size) - 1;
+
+            $R(x, width).each(function(dx) {
+                $R(y, height).each(function(dy) {
+                    self.grid[dy * self.size + dx] = otherWorld.alive(dx - x, dy - y);
+                });
+            });
+        },
+
         reset: function() {
             this.grid = empty_grid_sized(this.size);
         },
 
         resize: function(new_size) {
-            var self = this, new_grid, min_size = Math.min(this.size, new_size) - 1;
+            var self = this, 
+                new_grid, 
+                min_size = Math.min(this.size, new_size) - 1;
 
             new_grid = empty_grid_sized(new_size);
             $R(0, min_size).each(function(x) {
@@ -186,6 +208,10 @@ BGProcess.GameOfLife = function(args) {
             }
         },
 
+        blit: function(x, y, pattern) {
+            world.blit(x, y, pattern);
+        },
+
         reset: function() {
             world.reset();
             population = 0;
@@ -246,9 +272,18 @@ BGProcess.Life = function(args) {
         },
 
         spawn: function(x, y) {
-            var location = display.location_of(x, y);
+            var location = display.location_of(x - layout.get('left'), y - layout.get('top'));
             grid.toggle(location.x, location.y);
             self.draw();
+        },
+
+        insert: function(x, y, pattern) {
+            var layout = args.canvas.getLayout(),
+                location = display.location_of(x - layout.get('left'), y - layout.get('top'));
+            if (display.contains(x, y)) {
+                grid.blit(location.x, location.y, pattern);
+                self.draw();
+            }
         },
 
         resize: function(size) {
@@ -262,4 +297,112 @@ BGProcess.Life = function(args) {
     self.draw();
 
     return self;
+};
+
+BGProcess.LifePattern = function(args) {
+    var pattern = args.pattern;
+
+    function max_length(items) {
+        return Math.max.apply(null, items.collect(function(e) { return e.length; }));
+    }
+
+    function empty_line_lengthed(length) {
+        var line = [];
+        length.times(function() { line.push('.'); });
+        return line.join('');
+    }
+
+    function pad_lines_to_length(lines, length) {
+        if (lines.length < length) {
+            (length - lines.length).times(function(){
+                lines.push(empty_line_lengthed(length));
+            });
+        }
+
+        return lines;
+    }
+
+    function pad_to_length(line, length) {
+        if (line.length < length) {
+            (length - line.length).times(function() {
+                line += '.';
+            });
+        }
+
+        return line;
+    }
+
+    return {
+        id: args.id,
+        name: args.name || 'Unknown',
+        source: args.source,
+        founder: args.founder,
+        found_date: args.found_date,
+
+        world: function() {
+            var grid = [],
+                lines = pattern.split('\n'),
+                size = Math.max(lines.length, max_length(lines));
+
+            pad_lines_to_length(lines, size).each(function(line) {
+                pad_to_length(line, size).split('').each(function(letter) {
+                    grid.push(letter === 'O' ? 1 : 0);
+                });
+            });
+
+            return BGProcess.LifeWorld({ grid: grid, size: size });
+        }
+    };
+};
+
+BGProcess.LifeLibrary = function(args) {
+    var container = args.container,
+        target = args.target,
+        shelf = [
+            BGProcess.LifePattern({ 
+                id: 1,
+                source: 'http://www.argentum.freeserve.co.uk/lex_i.htm',
+                pattern:
+                    'O..\n' +
+                    '.O..\n' +
+                    '.OO.\n' +
+                    '..OO',
+                name: 'I-heptomino',
+                founder: 'Conway'
+            }),
+
+            BGProcess.LifePattern({ 
+                id: 2,
+                source: 'http://www.argentum.freeserve.co.uk/lex_i.htm',
+                pattern:
+                    '......O.\n' +
+                    '....O.OO\n' +
+                    '....O.O.\n' +
+                    '....O...\n' +
+                    '..O.....\n' +
+                    'O.O.....',
+                founder: 'Paul Callahan',
+                found_date: 'December 1997'
+            })
+        ],
+        template = new Template('<div class="pattern" id="pattern_#{id}"><div class="label">#{name}</div>' +
+                                '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="210" height="210"></canvas></div>');
+
+    function drawPattern(pattern) {
+        var world = pattern.world(), canvas;
+
+        container.insert(template.evaluate(pattern));
+        canvas = container.down('#pattern_' + pattern.id + ' canvas');
+        BGProcess.LifeDisplay({ canvas: canvas, size: world.size }).draw(world.grid);
+        (function() { 
+            new S2.UI.Behavior.Drag(canvas, { 
+                onmouseup: function(e) { 
+                    target.insert(e.pointerX(), e.pointerY(), pattern);
+                    canvas.setStyle({ top: 0, left: 0 });
+                } 
+            }); 
+        }).defer();
+    }
+
+    shelf.each(drawPattern);
 };
