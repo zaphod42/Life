@@ -453,7 +453,24 @@ BGProcess.LifeLibrary = function(args) {
                     '.........O...................\n' +
                     '.....O..O....................',
                 name: 'sailboat'
+            }),
+
+            BGProcess.LifePattern({ 
+                id: 6,
+                source: 'http://www.argentum.freeserve.co.uk/lex_u.htm',
+                pattern:
+                    '.OO.....\n' +
+                    '.OO.....\n' +
+                    '........\n' +
+                    '.O......\n' +
+                    'O.O.....\n' +
+                    'O..O..OO\n' +
+                    '....O.OO\n' +
+                    '..OO....',
+                name: 'unix'
             })
+
+
 
         ],
         template = new Template('<div class="pattern" id="pattern_#{id}"><div class="label">#{name}</div>' +
