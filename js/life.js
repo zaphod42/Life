@@ -272,7 +272,8 @@ BGProcess.Life = function(args) {
         },
 
         spawn: function(x, y) {
-            var location = display.location_of(x - layout.get('left'), y - layout.get('top'));
+            var layout = args.canvas.getLayout(),
+                location = display.location_of(x - layout.get('left'), y - layout.get('top'));
             grid.toggle(location.x, location.y);
             self.draw();
         },
