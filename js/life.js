@@ -138,6 +138,7 @@ BGProcess.LifeWorld = function(args) {
 BGProcess.GameOfLife = function(args) {
     var size = args.size, 
         world = BGProcess.LifeWorld({ size: size }),
+        oldWorld = BGProcess.LifeWorld({ size: size }),
         self,
         neighbor_lookup = [],
         population;
@@ -172,11 +173,9 @@ BGProcess.GameOfLife = function(args) {
         population: function() { return population; },
 
         step: function step() {
-            var i, newGrid = [], count, cell, grid = world.grid;
+            var i, newGrid = oldWorld.grid, count, cell, grid = world.grid, tmp;
 
             population = 0;
-            newGrid.length = grid.length;
-
             for (i = 0; i < grid.length; ++i) {
                 cell = grid[i];
                 count = neighbor_count(grid, i);
@@ -196,7 +195,9 @@ BGProcess.GameOfLife = function(args) {
                 }
             }
 
-            world = BGProcess.LifeWorld({ size: size, grid: newGrid });
+            tmp = world;
+            world = oldWorld;
+            oldWorld = tmp;
         },
 
         toggle: function(x, y) {
@@ -219,6 +220,7 @@ BGProcess.GameOfLife = function(args) {
 
         resize: function(new_size) {
             world.resize(new_size * 1);
+            oldWorld = BGProcess.LifeWorld({ size: new_size * 1 });
             size = world.size;
             compute_indices();
         }
