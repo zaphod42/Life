@@ -386,10 +386,44 @@ BGProcess.LifeLibrary = function(args) {
                     'O.O.....',
                 founder: 'Paul Callahan',
                 found_date: 'December 1997'
+            }),
+
+            BGProcess.LifePattern({ 
+                id: 3,
+                source: 'http://www.argentum.freeserve.co.uk/lex_c.htm',
+                pattern:
+                    'OOO..........\n' +
+                    'O.........OO.\n' +
+                    '.O......OOO.O\n' +
+                    '...OO..OO....\n' +
+                    '....O........\n' +
+                    '........O....\n' +
+                    '....OO...O...\n' +
+                    '...O.O.OO....\n' +
+                    '...O.O..O.OO.\n' +
+                    '..O....OO....\n' +
+                    '..OO.........\n' +
+                    '..OO.........',
+                name: 'Canada goose',
+                founder: 'Jason Summers',
+                found_date: 'January 1999'
+            }),
+
+            BGProcess.LifePattern({ 
+                id: 4,
+                source: 'http://www.argentum.freeserve.co.uk/lex_c.htm',
+                pattern:
+                    '...OO\n' + 
+                    '....O\n' + 
+                    '...O.\n' + 
+                    'O.O..\n' + 
+                    'OO...', 
+                name: 'canoe'
             })
+
         ],
         template = new Template('<div class="pattern" id="pattern_#{id}"><div class="label">#{name}</div>' +
-                                '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="210" height="210"></canvas></div>');
+                                '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas></div>');
 
     function drawPattern(pattern) {
         var world = pattern.world(), canvas;
