@@ -4,29 +4,51 @@
         <script src="js/thirdparty/s2.js"></script>
         <script src="js/life.js"></script>
         <style>
-            body { background-color: black; color: #33FF33; }
+            body { background-color: black; color: #33FF33; font-size: 12px; }
+            button { background-color: black; color: #33FF33; border: 1px outset #11AA11; }
 
             #sidebar { float: left; width: 224px; }
 
             .info { float: left; }
-            #generations, #population { float: left; margin: 2px; padding: 2px; width: 100px; border: 1px solid gray; }
+            #generations, #population { float: left; margin: 2px; padding: 2px; width: 100px; border: 1px inset #11AA11; }
 
-            #sizer { border: 1px solid gray; width: 219px; height: 10px; }
+            #sizer { border: 1px inset #11AA11; width: 219px; }
             #sizer .ui-slider-handle { background-color: #33FF33; font-size: 10px; padding: 0 5px; position: relative; }
 
             .pattern { float: left; width: 100px; margin: 2px; padding: 1px; border: 1px solid #33FF33; }
 
             #library { width: 219px; height: 500px; }
+            #library .info { 
+                z-index: 10;
+                float: right;
+                cursor: pointer;
+                font-weight: bold;
+                color: black;
+                background-color: #33FF33;
+                border-top: 2px solid black;
+                border-left: 2px solid black;
+                padding: 1px;
+                position: relative;
+                top: 100px;
+            }
+
+            .ui-dialog { background: black; border: 1px solid #33FF33; }
+            .ui-dialog .ui-dialog-titlebar { background: #003300; text-align: center; font-weight: bold; font-size: larger; }
+            .ui-dialog .ui-dialog-content dl { padding: 5px; float: left; margin-top: 0; }
+            .ui-dialog .ui-dialog-content dt { font-weight: bold; }
+            .ui-dialog .ui-dialog-content pre { float: right; padding: 5px; text-align: center; }
+            .ui-dialog .ui-dialog-buttonpane { clear: both; text-align: center; }
+
         </style>
     </head>
     <body>
         <form>
             <div id="sidebar">
                 <div id="controls">
-                    <input type="button" id="start" value="Start">
-                    <input type="button" id="step" value="Step">
-                    <input type="button" id="stop" value="Stop">
-                    <input type="button" id="reset" value="Reset">
+                    <button type="button" id="start">Start</button>
+                    <button type="button" id="stop">Stop</button>
+                    <button type="button" id="step">Step</button>
+                    <button type="button" id="reset">Reset</button>
                 </div>
                 <div class="info">
                     <div class="label">Generations:</div>
@@ -60,9 +82,10 @@
                 target: life
             });
 
-            $('start').on('click', life.start.bind(life));
+            $('start').on('click', function() { $('start').hide(); $('stop').show(); life.start(); });
+            $('stop').on('click', function() { $('start').show(); $('stop').hide(); life.stop(); });
+            $('stop').hide();
             $('step').on('click', life.step.bind(life));
-            $('stop').on('click', life.stop.bind(life));
             $('reset').on('click', life.reset.bind(life));
             $('canvas').on('click', function(e) { 
                 var layout = e.element().getLayout();

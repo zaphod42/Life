@@ -338,9 +338,10 @@ BGProcess.LifePattern = function(args) {
     return {
         id: args.id,
         name: args.name || 'Unknown',
+        pattern: args.pattern,
         source: args.source,
-        founder: args.founder,
-        found_date: args.found_date,
+        founder: args.founder || 'Unknown',
+        found_date: args.found_date || 'Unknown',
 
         world: function() {
             var grid = [],
@@ -469,18 +470,23 @@ BGProcess.LifeLibrary = function(args) {
                     '..OO....',
                 name: 'unix'
             })
-
-
-
         ],
-        template = new Template('<div class="pattern" id="pattern_#{id}"><div class="label">#{name}</div>' +
+        info_template = new Template('<pre>#{pattern}</pre>' +
+                                     '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>'),
+        template = new Template('<div class="pattern" id="pattern_#{id}"><div class="info">?</div><div class="label">#{name}</div>' +
                                 '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas></div>');
 
     function drawPattern(pattern) {
-        var world = pattern.world(), canvas;
+        var world = pattern.world(), 
+            canvas, 
+            info, 
+            dialog = new S2.UI.Dialog({ modal: false, title: 'Pattern Info', content: info_template.evaluate(pattern) });
 
         container.insert(template.evaluate(pattern));
         canvas = container.down('#pattern_' + pattern.id + ' canvas');
+        info = container.down('#pattern_' + pattern.id + ' .info');
+        info.on('click', dialog.open.bind(dialog));
+
         BGProcess.LifeDisplay({ canvas: canvas, size: world.size }).draw(world.grid);
         (function() { 
             new S2.UI.Behavior.Drag(canvas, { 
