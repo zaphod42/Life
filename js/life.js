@@ -504,8 +504,7 @@ BGProcess.LifeLibrary = function(args) {
                                 '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas></li>');
 
     function drawPattern(pattern) {
-        var display,
-            dialog = new S2.UI.Dialog({ modal: false, title: 'Pattern Info', content: info_template.evaluate(pattern) });
+        var display, dialog;
 
         container.insert(template.evaluate(pattern));
 
@@ -518,7 +517,14 @@ BGProcess.LifeLibrary = function(args) {
             container.down('#pattern_' + pattern.id + ' .info').hide();
             container.down('#pattern_' + pattern.id + ' .rotate').hide();
         });
-        container.down('#pattern_' + pattern.id + ' .info').hide().on('click', dialog.open.bind(dialog));
+        container.down('#pattern_' + pattern.id + ' .info').hide().on('click', function() {
+            if (dialog) {
+                dialog.close();
+                dialog.element.remove();
+            }
+            dialog = new S2.UI.Dialog({ modal: false, title: 'Pattern Info', content: info_template.evaluate(pattern) });
+            dialog.open();
+        });
         container.down('#pattern_' + pattern.id + ' .rotate').hide().on('click', function() {
             pattern.rotate(); 
             display.draw(pattern.world().grid);
