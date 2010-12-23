@@ -339,26 +339,48 @@ BGProcess.LifePattern = function(args) {
         return line;
     }
 
+    function normalize(pattern) {
+        var lines = pattern.split('\n'),
+            size = Math.max(lines.length, max_length(lines)),
+            normalized = [];
+
+        pad_lines_to_length(lines, size).each(function(line) {
+            normalized.push(pad_to_length(line, size))
+        });
+
+        return normalized.join('\n');
+    }
+
     return {
         id: args.id,
         name: args.name || 'Unknown',
-        pattern: args.pattern,
+        pattern: normalize(args.pattern),
         source: args.source,
         founder: args.founder || 'Unknown',
         found_date: args.found_date || 'Unknown',
 
+        rotate: function() {
+            var lines = this.pattern.split('\n'),
+                new_lines = [];
+
+            $R(1, lines.length).each(function(index) { 
+                new_lines.push(lines.collect(function(line) { return line.substr(line.length - index, 1); }).join('')); 
+            });
+
+            this.pattern = new_lines.join('\n');
+        },
+
         world: function() {
             var grid = [],
-                lines = pattern.split('\n'),
-                size = Math.max(lines.length, max_length(lines));
+                lines = this.pattern.split('\n');
 
-            pad_lines_to_length(lines, size).each(function(line) {
-                pad_to_length(line, size).split('').each(function(letter) {
+            lines.each(function(line) {
+                line.split('').each(function(letter) {
                     grid.push(letter === 'O' ? 1 : 0);
                 });
             });
 
-            return BGProcess.LifeWorld({ grid: grid, size: size });
+            return BGProcess.LifeWorld({ grid: grid, size: lines.length });
         }
     };
 };
@@ -478,26 +500,36 @@ BGProcess.LifeLibrary = function(args) {
         next_id = 7,
         info_template = new Template('<pre>#{pattern}</pre>' +
                                      '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>'),
-        template = new Template('<div class="pattern" id="pattern_#{id}"><div class="info">?</div><div class="label">#{name}</div>' +
-                                '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas></div>');
+        template = new Template('<li class="pattern" id="pattern_#{id}"><div class="rotate">&#8634;</div><div class="info">?</div><div class="label">#{name}</div>' +
+                                '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas></li>');
 
     function drawPattern(pattern) {
-        var world = pattern.world(), 
-            canvas, 
-            info, 
+        var display,
             dialog = new S2.UI.Dialog({ modal: false, title: 'Pattern Info', content: info_template.evaluate(pattern) });
 
         container.insert(template.evaluate(pattern));
-        canvas = container.down('#pattern_' + pattern.id + ' canvas');
-        info = container.down('#pattern_' + pattern.id + ' .info');
-        info.on('click', dialog.open.bind(dialog));
 
-        BGProcess.LifeDisplay({ canvas: canvas, size: world.size }).draw(world.grid);
+        display = BGProcess.LifeDisplay({ canvas: container.down('#pattern_' + pattern.id + ' canvas'), size: pattern.world().size });
+        container.down('#pattern_' + pattern.id).on('mouseenter', function() {
+            container.down('#pattern_' + pattern.id + ' .info').show();
+            container.down('#pattern_' + pattern.id + ' .rotate').show();
+        });
+        container.down('#pattern_' + pattern.id).on('mouseleave', function() {
+            container.down('#pattern_' + pattern.id + ' .info').hide();
+            container.down('#pattern_' + pattern.id + ' .rotate').hide();
+        });
+        container.down('#pattern_' + pattern.id + ' .info').hide().on('click', dialog.open.bind(dialog));
+        container.down('#pattern_' + pattern.id + ' .rotate').hide().on('click', function() {
+            pattern.rotate(); 
+            display.draw(pattern.world().grid);
+        });
+
+        display.draw(pattern.world().grid);
         (function() { 
-            new S2.UI.Behavior.Drag(canvas, { 
+            new S2.UI.Behavior.Drag(container.down('#pattern_' + pattern.id + ' canvas'), { 
                 onmouseup: function(e) { 
                     target.insert(e.pointerX(), e.pointerY(), pattern);
-                    canvas.setStyle({ top: 0, left: 0 });
+                    e.element().setStyle({ top: 0, left: 0 });
                 } 
             }); 
         }).defer();  // Have to defer or else we don't have the right coordinates for some reason
