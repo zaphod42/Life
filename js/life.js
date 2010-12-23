@@ -316,8 +316,12 @@ BGProcess.LifePattern = function(args) {
     }
 
     function pad_lines_to_length(lines, length) {
+        var diff = (length - lines.length)/2;
         if (lines.length < length) {
-            (length - lines.length).times(function(){
+            Math.ceil(diff).times(function(){
+                lines.unshift(empty_line_lengthed(length));
+            });
+            Math.floor(diff).times(function(){
                 lines.push(empty_line_lengthed(length));
             });
         }
@@ -471,6 +475,7 @@ BGProcess.LifeLibrary = function(args) {
                 name: 'unix'
             })
         ],
+        next_id = 7,
         info_template = new Template('<pre>#{pattern}</pre>' +
                                      '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>'),
         template = new Template('<div class="pattern" id="pattern_#{id}"><div class="info">?</div><div class="label">#{name}</div>' +
@@ -499,4 +504,50 @@ BGProcess.LifeLibrary = function(args) {
     }
 
     shelf.each(drawPattern);
+
+    return {
+        add: function() {
+            var save = new Element('button', { type: 'button' }).update('Save'),
+                cancel = new Element('button', { type: 'button' }).update('Cancel'),
+                dialog = new S2.UI.Dialog({ 
+                    modal: false, 
+                    title: 'Add Pattern Info', 
+                    content: info_template.evaluate({
+                        name: '<input class="name">',
+                        founder: '<input class="founder">',
+                        found_date: '<input class="found_date">',
+                        pattern: '<textarea rows="10" class="pattern"></textarea>'
+                    }),
+                    buttons: [{
+                        primary: true,
+                        label: 'Save',
+                        action: function() {
+                            var element = this.element;
+                            if($F(element.down('.pattern')).blank()) {
+                                return;
+                            }
+
+                            drawPattern(BGProcess.LifePattern({ 
+                                id: next_id++,
+                                founder: $F(element.down('.founder')).strip(),
+                                found_date: $F(element.down('.found_date')).strip(),
+                                pattern: $F(element.down('.pattern')).strip(),
+                                name: $F(element.down('.name')).strip()
+                            }));
+
+                            this.close();
+                        }
+                    },
+                    {
+                        secondary: true,
+                        label: 'Cancel',
+                        action: function() {
+                            this.close();
+                        }
+                    }]
+                });
+
+            dialog.open();
+        }
+    };
 };
