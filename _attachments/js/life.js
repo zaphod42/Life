@@ -8,7 +8,8 @@ BGProcess.LifeDisplay = function(args) {
 
     self = {
         location_of: function(x, y) {
-            return { x: Math.floor(x / width), y: Math.floor(y / height) };
+            var layout = args.canvas.getLayout();
+            return { x: Math.floor((x - layout.get('left')) / width), y: Math.floor((y - layout.get('top')) / height) };
         },
 
         contains: function(x, y) {
@@ -233,12 +234,12 @@ BGProcess.GameOfLife = function(args) {
 };
 
 BGProcess.Life = function(args) {
-    var display = BGProcess.LifeDisplay({ canvas: args.canvas, size: 10 }),
+    var display = args.display,
         generation_output = args.generations,
         population_output = args.population,
         
         generation = 0,
-        grid = BGProcess.GameOfLife({ size: 10 }),
+        grid = BGProcess.GameOfLife({ size: args.size }),
         self;
 
     self = {
@@ -274,15 +275,13 @@ BGProcess.Life = function(args) {
         },
 
         spawn: function(x, y) {
-            var layout = args.canvas.getLayout(),
-                location = display.location_of(x - layout.get('left'), y - layout.get('top'));
+            var location = display.location_of(x, y);
             grid.toggle(location.x, location.y);
             self.draw();
         },
 
         insert: function(x, y, pattern) {
-            var layout = args.canvas.getLayout(),
-                location = display.location_of(x - layout.get('left'), y - layout.get('top'));
+            var location = display.location_of(x, y);
             if (display.contains(x, y)) {
                 grid.blit(location.x, location.y, pattern);
                 self.draw();
@@ -396,6 +395,35 @@ BGProcess.LifePattern = function(args) {
     };
 };
 
+BGProcess.PatternLibrary = function() {
+    function is_pattern(doc) {
+        return !!doc.pattern;
+    }
+
+    var db = new CouchDB('life');
+        
+    return {
+        insert: function(pattern) {
+            db.save(pattern.data());
+        },
+
+        patterns: function(cont) {
+            var startkey = cont || '',
+                docs = db.view('life/patterns', { reduce: false, startkey_docid: startkey, limit: 9 });
+                results = {
+                    cont: docs.total_rows === 9 ? docs.rows.last().id : undefined,
+                    patterns: docs.rows.pluck('value').collect(BGProcess.LifePattern)
+                };
+
+            if (results.patterns.length === 9) {
+                results.patterns.pop();
+            }
+
+            return results;
+        }
+    };
+};
+
 BGProcess.NewPatternDialog = function(onSave) {
     var info_template = new Template('<pre>#{pattern}</pre>' +
                                      '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>');
@@ -445,7 +473,7 @@ BGProcess.ViewPatternDialog = function(pattern) {
     return new S2.UI.Dialog({ modal: false, title: 'Pattern Info', content: info_template.evaluate(pattern) });
 };
 
-BGProcess.LibraryPattern = function(pattern) {
+BGProcess.LibraryPattern = function(target, pattern) {
     var template = new Template('<li class="pattern" id="pattern_#{id}"><div class="rotate">&#8634;</div><div class="info">?</div><div class="label">#{name}</div>' +
                                 '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas></li>'),
         display, dialog, container = new Element('div');
@@ -489,23 +517,20 @@ BGProcess.LibraryPattern = function(pattern) {
     };
 };
 
-BGProcess.LifeLibrary = function(args) {
-    var container = args.container,
-        target = args.target,
-        is_pattern = function(doc) { return !!doc.pattern; },
-        db = new CouchDB('life'),
-        docs = db.allDocs().rows.pluck('id').collect(db.open.bind(db)).select(is_pattern),
-        shelf;
+BGProcess.LifeLibraryView = function(args) {
+    var container = new Element('ul'),
+        library = args.library,
+        target = args.target;
         
-    shelf = docs.collect(BGProcess.LifePattern);
-
-    shelf.collect(BGProcess.LibraryPattern).each(Element.insert.curry(container));
+    library.patterns().patterns.collect(BGProcess.LibraryPattern.curry(target)).each(Element.insert.curry(container));
 
     return {
-        add: function() {
+        toElement: function() { return container; },
+
+        new_pattern: function() {
             var dialog = BGProcess.NewPatternDialog(function(pattern) {
-                container.insert(BGProcess.LibraryPattern(pattern));
-                new CouchDB('life').save(pattern.data());
+                library.insert(pattern);
+                container.insert(BGProcess.LibraryPattern(target, pattern));
             });
             dialog.open();
         }

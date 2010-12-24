@@ -21,7 +21,7 @@
             #library_header { margin-top: 20px; }
             #library_header .label { display: inline; }
             #library_header #add_pattern { cursor: pointer; }
-            #library { width: 219px; height: 500px; list-style: none; margin: 0; padding: 0; }
+            #library ul { width: 219px; height: 500px; list-style: none; margin: 0; padding: 0; }
             #library .info, #library .rotate { 
                 z-index: 10;
                 cursor: pointer;
@@ -75,24 +75,26 @@
                         <input type="text" id="library_search">
                         <span id="add_pattern">+</span>
                     </div>
-                    <ul id="library"></ul>
+                    <div id="library"></div>
                 </div>
             </div>
             <canvas width="800" height="600" id="canvas"></canvas>
         </form>
         <script>
             var life = BGProcess.Life({
-                canvas: $('canvas'),
+                display: BGProcess.LifeDisplay({ canvas: $('canvas'), size: 10 }),
                 generations: $('generations'),
-                population: $('population')
+                population: $('population'),
+                size: 10
             });
 
-            var library = BGProcess.LifeLibrary({
-                container: $('library'),
-                target: life
+            var library = BGProcess.LifeLibraryView({
+                target: life,
+                library: BGProcess.PatternLibrary()
             });
+            $('library').update(library);
 
-            $('add_pattern').on('click', library.add.bind(library));
+            $('add_pattern').on('click', library.new_pattern.bind(library));
 
             $('start').on('click', function() { $('start').hide(); $('stop').show(); life.start(); });
             $('stop').on('click', function() { $('start').show(); $('stop').hide(); life.stop(); });
