@@ -400,22 +400,23 @@ BGProcess.PatternLibrary = function() {
         return !!doc.pattern;
     }
 
-    var db = new CouchDB('life');
+    var db = new CouchDB('life'),
+        MAX_RESULTS = 7;
         
     return {
         insert: function(pattern) {
             db.save(pattern.data());
         },
 
-        patterns: function(cont) {
-            var startkey = cont || '',
-                docs = db.view('life/patterns', { reduce: false, startkey_docid: startkey, limit: 9 });
+        patterns: function(continuation) {
+            var startkey = continuation || '',
+                docs = db.view('life/patterns', { reduce: false, startkey: startkey, limit: MAX_RESULTS });
                 results = {
-                    cont: docs.total_rows === 9 ? docs.rows.last().id : undefined,
+                    continuation: docs.rows.length === MAX_RESULTS ? docs.rows.last().id : undefined,
                     patterns: docs.rows.pluck('value').collect(BGProcess.LifePattern)
                 };
 
-            if (results.patterns.length === 9) {
+            if (results.patterns.length === MAX_RESULTS) {
                 results.patterns.pop();
             }
 
@@ -518,13 +519,13 @@ BGProcess.LibraryPattern = function(target, pattern) {
 };
 
 BGProcess.LifeLibraryView = function(args) {
-    var container = new Element('ul'),
+    var container = new Element('div'),
+        listing = new Element('ul'),
         library = args.library,
-        target = args.target;
-        
-    library.patterns().patterns.collect(BGProcess.LibraryPattern.curry(target)).each(Element.insert.curry(container));
+        target = args.target,
+        next, previous = [], current = '', self;
 
-    return {
+    self = {
         toElement: function() { return container; },
 
         new_pattern: function() {
@@ -533,6 +534,41 @@ BGProcess.LifeLibraryView = function(args) {
                 container.insert(BGProcess.LibraryPattern(target, pattern));
             });
             dialog.open();
+        },
+
+        search: function(continuation) {
+            var results = library.patterns(continuation);
+            next = results.continuation;
+            self.show(results.patterns);
+        },
+
+        show: function(patterns) {
+            listing.update('');
+            patterns.collect(BGProcess.LibraryPattern.curry(target)).each(Element.insert.curry(listing));
+        },
+
+        next_page: function() {
+            if (next) {
+                previous.push(current);
+                current = next;
+                self.search(current);
+            }
+        },
+
+        previous_page: function() {
+            if (previous.length) {
+                current = previous.pop();
+                self.search(current);
+            } else {
+                current = '';
+                self.search('');
+            }
         }
     };
+
+    container.insert(listing);
+        
+    self.search(current);
+
+    return self;
 };

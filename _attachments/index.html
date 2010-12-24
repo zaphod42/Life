@@ -21,7 +21,7 @@
             #library_header { margin-top: 20px; }
             #library_header .label { display: inline; }
             #library_header #add_pattern { cursor: pointer; }
-            #library ul { width: 219px; height: 500px; list-style: none; margin: 0; padding: 0; }
+            #library ul { width: 219px; height: 370px; list-style: none; margin: 0; padding: 0; }
             #library .info, #library .rotate { 
                 z-index: 10;
                 cursor: pointer;
@@ -37,6 +37,8 @@
             
             input, textarea { border: 1px inset #11AA11; background-color: black; color: white; font-family: Fixed, monospace; }
             #library_search { width: 135px; }
+            #next_page { float: right; cursor: pointer; }
+            #prev_page { float: left; cursor: pointer; }
 
             .ui-dialog { background: black; border: 1px solid #33FF33; }
             .ui-dialog .ui-dialog-titlebar { background: #003300; text-align: center; font-weight: bold; font-size: larger; }
@@ -76,6 +78,8 @@
                         <span id="add_pattern">+</span>
                     </div>
                     <div id="library"></div>
+                    <div id="next_page">-Next-&gt;</div>
+                    <div id="prev_page">&lt;-Previous-</div>
                 </div>
             </div>
             <canvas width="800" height="600" id="canvas"></canvas>
@@ -93,6 +97,8 @@
                 library: BGProcess.PatternLibrary()
             });
             $('library').update(library);
+            $('next_page').on('click', library.next_page.bind(library));
+            $('prev_page').on('click', library.previous_page.bind(library));
 
             $('add_pattern').on('click', library.new_pattern.bind(library));
 
