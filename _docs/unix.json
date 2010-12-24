@@ -1,0 +1,6 @@
+{ 
+    "id": 6,
+    "source": "http://www.argentum.freeserve.co.uk/lex_u.htm",
+    "pattern": ".OO.....\n.OO.....\n........\n.O......\nO.O.....\nO..O..OO\n....O.OO\n..OO....",
+    "name": "unix"
+}

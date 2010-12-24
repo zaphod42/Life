@@ -352,7 +352,7 @@ BGProcess.LifePattern = function(args) {
     }
 
     return {
-        id: args.id,
+        id: args._id,
         name: args.name || 'Unknown',
         pattern: normalize(args.pattern),
         source: args.source,
@@ -361,6 +361,7 @@ BGProcess.LifePattern = function(args) {
 
         data: function() {
             return {
+                id: this.id,
                 name: this.name,
                 pattern: this.pattern,
                 source: this.source,
@@ -395,7 +396,7 @@ BGProcess.LifePattern = function(args) {
     };
 };
 
-BGProcess.NewPatternDialog = function(id, onSave) {
+BGProcess.NewPatternDialog = function(onSave) {
     var info_template = new Template('<pre>#{pattern}</pre>' +
                                      '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>');
     return new S2.UI.Dialog({ 
@@ -417,14 +418,13 @@ BGProcess.NewPatternDialog = function(id, onSave) {
                 }
 
                 doc = { 
-                    id: id,
                     founder: $F(element.down('.founder')).strip(),
                     found_date: $F(element.down('.found_date')).strip(),
                     pattern: $F(element.down('.pattern')).strip(),
                     name: $F(element.down('.name')).strip()
                 };
-                onSave(BGProcess.LifePattern(doc));
                 new CouchDB('life').save(doc);
+                onSave(BGProcess.LifePattern(doc));
 
                 this.close();
             }
@@ -492,122 +492,18 @@ BGProcess.LibraryPattern = function(pattern) {
 BGProcess.LifeLibrary = function(args) {
     var container = args.container,
         target = args.target,
-        shelf = [
-            BGProcess.LifePattern({ 
-                id: 1,
-                source: 'http://www.argentum.freeserve.co.uk/lex_i.htm',
-                pattern:
-                    'O..\n' +
-                    '.O..\n' +
-                    '.OO.\n' +
-                    '..OO',
-                name: 'I-heptomino',
-                founder: 'Conway'
-            }),
-
-            BGProcess.LifePattern({ 
-                id: 2,
-                source: 'http://www.argentum.freeserve.co.uk/lex_i.htm',
-                pattern:
-                    '......O.\n' +
-                    '....O.OO\n' +
-                    '....O.O.\n' +
-                    '....O...\n' +
-                    '..O.....\n' +
-                    'O.O.....',
-                founder: 'Paul Callahan',
-                found_date: 'December 1997'
-            }),
-
-            BGProcess.LifePattern({ 
-                id: 3,
-                source: 'http://www.argentum.freeserve.co.uk/lex_c.htm',
-                pattern:
-                    'OOO..........\n' +
-                    'O.........OO.\n' +
-                    '.O......OOO.O\n' +
-                    '...OO..OO....\n' +
-                    '....O........\n' +
-                    '........O....\n' +
-                    '....OO...O...\n' +
-                    '...O.O.OO....\n' +
-                    '...O.O..O.OO.\n' +
-                    '..O....OO....\n' +
-                    '..OO.........\n' +
-                    '..OO.........',
-                name: 'Canada goose',
-                founder: 'Jason Summers',
-                found_date: 'January 1999'
-            }),
-
-            BGProcess.LifePattern({ 
-                id: 4,
-                source: 'http://www.argentum.freeserve.co.uk/lex_c.htm',
-                pattern:
-                    '...OO\n' + 
-                    '....O\n' + 
-                    '...O.\n' + 
-                    'O.O..\n' + 
-                    'OO...', 
-                name: 'canoe'
-            }),
-
-            BGProcess.LifePattern({ 
-                id: 5,
-                source: 'http://www.argentum.freeserve.co.uk/lex_s.htm',
-                pattern:
-                    '........O...........O........\n' +
-                    '.......O.O.........O.O.......\n' +
-                    '........O...........O........\n' +
-                    '.............................\n' +
-                    '......OOOOO.......OOOOO......\n' +
-                    '.....O....O.......O....O.....\n' +
-                    '....O..O.............O..O....\n' +
-                    '.O..O.OO.............OO.O..O.\n' +
-                    'O.O.O.....O.......O.....O.O.O\n' +
-                    '.O..O....O.O.....O.O....O..O.\n' +
-                    '....OO..O..O.....O..O..OO....\n' +
-                    '.........OO.......OO.........\n' +
-                    '.............OO..............\n' +
-                    '.............O.O.............\n' +
-                    '........O..O..O..............\n' +
-                    '.......O.....................\n' +
-                    '.....OO..........OOO.........\n' +
-                    '..O......OO.O....OOO.........\n' +
-                    '.....O...O..O....OOO.........\n' +
-                    '.....OOO.O...O......OOO......\n' +
-                    '..O...........O.....OOO......\n' +
-                    '...O...O.OOO........OOO......\n' +
-                    '....O..O...O.................\n' +
-                    '....O.OO......O..............\n' +
-                    '..........OO.................\n' +
-                    '.........O...................\n' +
-                    '.....O..O....................',
-                name: 'sailboat'
-            }),
-
-            BGProcess.LifePattern({ 
-                id: 6,
-                source: 'http://www.argentum.freeserve.co.uk/lex_u.htm',
-                pattern:
-                    '.OO.....\n' +
-                    '.OO.....\n' +
-                    '........\n' +
-                    '.O......\n' +
-                    'O.O.....\n' +
-                    'O..O..OO\n' +
-                    '....O.OO\n' +
-                    '..OO....',
-                name: 'unix'
-            })
-        ],
-        next_id = 7;
+        is_pattern = function(doc) { return !!doc.pattern; },
+        db = new CouchDB('life'),
+        docs = db.allDocs().rows.pluck('id').collect(db.open.bind(db)).select(is_pattern),
+        shelf;
+        
+    shelf = docs.collect(BGProcess.LifePattern);
 
     shelf.collect(BGProcess.LibraryPattern).each(Element.insert.curry(container));
 
     return {
         add: function() {
-            var dialog = BGProcess.NewPatternDialog(next_id++, function(pattern) {
+            var dialog = BGProcess.NewPatternDialog(function(pattern) {
                 container.insert(BGProcess.LibraryPattern(pattern));
                 new CouchDB('life').save(pattern.data());
             });
