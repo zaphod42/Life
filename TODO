@@ -19,6 +19,7 @@ Display:
 Development:
 * GET A TEST SUITE IN PLACE!
 * Change to using async calls for couchdb
+* Stop using Scripty2, it has too many bugs/deficiencies at the moment
 
 Other:
 * Take snapshots and revert to snapshots of the world
