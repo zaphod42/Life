@@ -351,16 +351,24 @@ BGProcess.LifePattern = function(args) {
     }
 
     return {
-        id: args._id,
+        _id: args._id,
         name: args.name || 'Unknown',
         pattern: normalize(args.pattern),
         source: args.source,
         founder: args.founder || 'Unknown',
         found_date: args.found_date || 'Unknown',
 
+        identify: function() {
+            if (this._id) {
+                return this._id;
+            }
+
+            throw "no identifier yet assigned!";
+        },
+
         data: function() {
             return {
-                id: this.id,
+                _id: this._id,
                 name: this.name,
                 pattern: this.pattern,
                 source: this.source,
@@ -405,7 +413,9 @@ BGProcess.PatternLibrary = function() {
         
     return {
         insert: function(pattern) {
-            db.save(pattern.data());
+            var data = pattern.data();
+            db.save(data);
+            pattern._id = data._id;
         },
 
         patterns: function(continuation) {
@@ -452,7 +462,6 @@ BGProcess.NewPatternDialog = function(onSave) {
                     pattern: $F(element.down('.pattern')).strip(),
                     name: $F(element.down('.name')).strip()
                 };
-                new CouchDB('life').save(doc);
                 onSave(BGProcess.LifePattern(doc));
 
                 this.close();
@@ -475,22 +484,23 @@ BGProcess.ViewPatternDialog = function(pattern) {
 };
 
 BGProcess.LibraryPattern = function(target, pattern) {
-    var template = new Template('<li class="pattern" id="pattern_#{id}"><div class="rotate">&#8634;</div><div class="info">?</div><div class="label">#{name}</div>' +
+    var template = new Template('<li class="pattern" id="pattern_#{_id}"><div class="rotate">&#8634;</div><div class="info">?</div><div class="label">#{name}</div>' +
                                 '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas></li>'),
-        display, dialog, container = new Element('div');
+        display, dialog, container = new Element('div'),
+        id = 'pattern_' + pattern.identify();
 
     container.insert(template.evaluate(pattern));
 
-    display = BGProcess.LifeDisplay({ canvas: container.down('#pattern_' + pattern.id + ' canvas'), size: pattern.world().size });
-    container.down('#pattern_' + pattern.id).on('mouseenter', function() {
-        container.down('#pattern_' + pattern.id + ' .info').show();
-        container.down('#pattern_' + pattern.id + ' .rotate').show();
+    display = BGProcess.LifeDisplay({ canvas: container.down('#' + id + ' canvas'), size: pattern.world().size });
+    container.down('#' + id).on('mouseenter', function() {
+        container.down('#' + id + ' .info').show();
+        container.down('#' + id + ' .rotate').show();
     });
-    container.down('#pattern_' + pattern.id).on('mouseleave', function() {
-        container.down('#pattern_' + pattern.id + ' .info').hide();
-        container.down('#pattern_' + pattern.id + ' .rotate').hide();
+    container.down('#' + id).on('mouseleave', function() {
+        container.down('#' + id + ' .info').hide();
+        container.down('#' + id + ' .rotate').hide();
     });
-    container.down('#pattern_' + pattern.id + ' .info').hide().on('click', function() {
+    container.down('#' + id + ' .info').hide().on('click', function() {
         if (dialog) {
             dialog.close();
             dialog.element.remove();
@@ -498,14 +508,14 @@ BGProcess.LibraryPattern = function(target, pattern) {
         dialog = BGProcess.ViewPatternDialog(pattern);
         dialog.open();
     });
-    container.down('#pattern_' + pattern.id + ' .rotate').hide().on('click', function() {
+    container.down('#' + id + ' .rotate').hide().on('click', function() {
         pattern.rotate(); 
         display.draw(pattern.world().grid);
     });
 
     display.draw(pattern.world().grid);
     (function() { 
-        new S2.UI.Behavior.Drag(container.down('#pattern_' + pattern.id + ' canvas'), { 
+        new S2.UI.Behavior.Drag(container.down('#' + id + ' canvas'), { 
             onmouseup: function(e) { 
                 target.insert(e.pointerX(), e.pointerY(), pattern);
                 e.element().setStyle({ top: 0, left: 0 });
@@ -531,9 +541,16 @@ BGProcess.LifeLibraryView = function(args) {
         new_pattern: function() {
             var dialog = BGProcess.NewPatternDialog(function(pattern) {
                 library.insert(pattern);
-                container.insert(BGProcess.LibraryPattern(target, pattern));
+                self.reset();
             });
             dialog.open();
+        },
+
+        reset: function() {
+            previous = [];
+            current = '';
+            next = undefined;
+            self.search(current);
         },
 
         search: function(continuation) {
@@ -568,7 +585,7 @@ BGProcess.LifeLibraryView = function(args) {
 
     container.insert(listing);
         
-    self.search(current);
+    self.reset();
 
     return self;
 };
