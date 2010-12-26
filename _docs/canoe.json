@@ -1,5 +1,6 @@
 { 
     "source": "http://www.argentum.freeserve.co.uk/lex_c.htm",
     "pattern": "...OO\n....O\n...O.\nO.O..\nOO...", 
-    "name": "canoe"
+    "name": "canoe",
+    "tags": ["pseudo", "still life"]
 }

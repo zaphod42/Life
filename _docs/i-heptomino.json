@@ -2,5 +2,6 @@
     "source": "http://www.argentum.freeserve.co.uk/lex_i.htm",
     "pattern": "O..\n.O..\n.OO.\n..OO",
     "name": "I-heptomino",
-    "founder": "Conway"
+    "founder": "John Conway",
+    "tags": ["heptomino"]
 }

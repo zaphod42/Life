@@ -99,6 +99,9 @@
             $('library').update(library);
             $('next_page').on('click', library.next_page.bind(library));
             $('prev_page').on('click', library.previous_page.bind(library));
+            $('library_search').on('keyup', function(e, element) {
+                (function() { library.reset(element.getValue()); }).defer();
+            });
 
             $('add_pattern').on('click', library.new_pattern.bind(library));
 

@@ -418,9 +418,11 @@ BGProcess.PatternLibrary = function() {
             pattern._id = data._id;
         },
 
-        patterns: function(continuation) {
-            var startkey = continuation || '',
-                docs = db.view('life/patterns', { reduce: false, startkey: startkey, limit: MAX_RESULTS });
+        patterns: function(continuation, tag) {
+            var startdoc = continuation || '',
+                start_tag = tag.strip() || '',
+                end_tag = tag.strip() ? tag.strip() + '\u9999' : '',
+                docs = db.view('life/patterns', { reduce: false, startkey_docid: startdoc, startkey: start_tag, endkey: end_tag, limit: MAX_RESULTS });
                 results = {
                     continuation: docs.rows.length === MAX_RESULTS ? docs.rows.last().id : undefined,
                     patterns: docs.rows.pluck('value').collect(BGProcess.LifePattern)
@@ -533,7 +535,7 @@ BGProcess.LifeLibraryView = function(args) {
         listing = new Element('ul'),
         library = args.library,
         target = args.target,
-        next, previous = [], current = '', self;
+        next, previous = [], current = '', term = '', self;
 
     self = {
         toElement: function() { return container; },
@@ -546,15 +548,16 @@ BGProcess.LifeLibraryView = function(args) {
             dialog.open();
         },
 
-        reset: function() {
+        reset: function(search_term) {
             previous = [];
             current = '';
             next = undefined;
+            term = search_term;
             self.search(current);
         },
 
         search: function(continuation) {
-            var results = library.patterns(continuation);
+            var results = library.patterns(continuation, term);
             next = results.continuation;
             self.show(results.patterns);
         },
@@ -585,7 +588,7 @@ BGProcess.LifeLibraryView = function(args) {
 
     container.insert(listing);
         
-    self.reset();
+    self.reset('');
 
     return self;
 };
