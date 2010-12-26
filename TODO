@@ -1,7 +1,8 @@
 Pattern library:
+* Save patterns in a different format (lists of bools?)
+* Select square on world and make into a new pattern (instead of typing in)
 * Tag patterns
 * Search library by tag/author/name
-* Select square on world and make into a new pattern
 * Allow mirroring of patterns
 * clockwise rotation of patterns
 * import a large number of already known patterns
@@ -9,7 +10,7 @@ Pattern library:
 * use scrolling to show library paging results rather than "previous" and "next"
 
 Evaluation:
-* Allow worlds larger that 100x100
+* Allow worlds larger that 100x100 (infinite if possible)
 
 Display:
 * Show where the pattern will drop on the world before actually placed
@@ -18,3 +19,7 @@ Display:
 Development:
 * GET A TEST SUITE IN PLACE!
 * Change to using async calls for couchdb
+
+Other:
+* Take snapshots and revert to snapshots of the world
+* Save snapshots to local storage
