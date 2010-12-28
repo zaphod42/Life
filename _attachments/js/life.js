@@ -437,11 +437,37 @@ BGProcess.PatternLibrary = function() {
     };
 };
 
+BGProcess.Dialog = function(args) {
+    var title = args.title,
+        content = args.content,
+        buttons = args.buttons || [{ label: 'Close', action: function() { this.close(); } }],
+        dialog_template = new Template('<div class="ui-dialog"><div class="ui-dialog-titlebar">#{title}</div>' +
+                                       '<div class="ui-dialog-content">#{content}</div>' +
+                                       '<div class="ui-dialog-buttonpane"></div></div>'),
+        container = new Element('div').update(dialog_template.evaluate({ title: title, content: content })),
+        win = Control.Window.open(container, { 
+            draggable: container.down('.ui-dialog-titlebar'),
+            afterClose: container.remove.bind(container)
+        });
+
+    document.body.appendChild(container);
+
+    buttons.each(function(button) {
+        container.down('.ui-dialog-buttonpane').insert(
+            new Element('button', { type: 'button' })
+                .insert(button.label)
+                .observe('click', function() {
+                    button.action.call(win);
+                }));
+    });
+
+    return win;
+};
+
 BGProcess.NewPatternDialog = function(onSave) {
     var info_template = new Template('<pre>#{pattern}</pre>' +
                                      '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>');
-    return new S2.UI.Dialog({ 
-        modal: false, 
+    return BGProcess.Dialog({
         title: 'Add Pattern Info', 
         content: info_template.evaluate({
             name: '<input class="name">',
@@ -450,10 +476,9 @@ BGProcess.NewPatternDialog = function(onSave) {
             pattern: '<textarea rows="10" class="pattern"></textarea>'
         }),
         buttons: [{
-            primary: true,
             label: 'Save',
             action: function() {
-                var element = this.element, doc;
+                var element = this.container, doc;
                 if($F(element.down('.pattern')).blank()) {
                     return;
                 }
@@ -470,7 +495,6 @@ BGProcess.NewPatternDialog = function(onSave) {
             }
         },
         {
-            secondary: true,
             label: 'Cancel',
             action: function() {
                 this.close();
@@ -482,7 +506,7 @@ BGProcess.NewPatternDialog = function(onSave) {
 BGProcess.ViewPatternDialog = function(pattern) {
     var info_template = new Template('<pre>#{pattern}</pre>' +
                                      '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>');
-    return new S2.UI.Dialog({ modal: false, title: 'Pattern Info', content: info_template.evaluate(pattern) });
+    return BGProcess.Dialog({ title: 'Pattern Info', content: info_template.evaluate(pattern) });
 };
 
 BGProcess.LibraryPattern = function(target, pattern) {
@@ -517,8 +541,9 @@ BGProcess.LibraryPattern = function(target, pattern) {
 
     display.draw(pattern.world().grid);
     (function() { 
-        new S2.UI.Behavior.Drag(container.down('#' + id + ' canvas'), { 
-            onmouseup: function(e) { 
+        new Draggable(container.down('#' + id + ' canvas'), { 
+            revert: true,
+            onEnd: function(drag, e) { 
                 target.insert(e.pointerX(), e.pointerY(), pattern);
                 e.element().setStyle({ top: 0, left: 0 });
             } 
@@ -543,7 +568,7 @@ BGProcess.LifeLibraryView = function(args) {
         new_pattern: function() {
             var dialog = BGProcess.NewPatternDialog(function(pattern) {
                 library.insert(pattern);
-                self.reset();
+                self.reset(term);
             });
             dialog.open();
         },

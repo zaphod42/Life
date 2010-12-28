@@ -1,7 +1,9 @@
 <html>
     <head>
         <script src="js/thirdparty/prototype.js"></script>
-        <script src="js/thirdparty/s2.js"></script>
+        <script src="js/thirdparty/scriptaculous.js"></script>
+        <script src="js/thirdparty/livepipe/livepipe.js"></script>
+        <script src="js/thirdparty/livepipe/window.js"></script>
         <script src="js/life.js"></script>
         <script src="/_utils/script/couch.js"></script>
         <style>
@@ -13,8 +15,8 @@
             .info { float: left; }
             #generations, #population { float: left; margin: 2px; padding: 2px; width: 100px; border: 1px inset #11AA11; }
 
-            #sizer { border: 1px inset #11AA11; width: 219px; }
-            #sizer .ui-slider-handle { background-color: #33FF33; font-size: 10px; padding: 0 5px; position: relative; }
+            #sizer { border: 1px inset #11AA11; width: 219px; height: 10px; position: relative; }
+            #sizer .ui-slider-handle { background-color: #33FF33; width:5px; height: 10px; position: absolute; }
 
             .pattern { position: relative; float: left; width: 100px; margin: 2px; padding: 1px; border: 1px solid #33FF33; }
 
@@ -41,7 +43,7 @@
             #prev_page { float: left; cursor: pointer; }
 
             .ui-dialog { background: black; border: 1px solid #33FF33; }
-            .ui-dialog .ui-dialog-titlebar { background: #003300; text-align: center; font-weight: bold; font-size: larger; }
+            .ui-dialog .ui-dialog-titlebar { cursor: pointer; background: #003300; text-align: center; font-weight: bold; font-size: larger; }
             .ui-dialog .ui-dialog-content dl { padding: 5px; float: left; margin-top: 0; }
             .ui-dialog .ui-dialog-content dt { font-weight: bold; }
             .ui-dialog .ui-dialog-content pre { float: right; padding: 5px; text-align: center; }
@@ -69,7 +71,9 @@
                 <div style="clear: both"></div>
                 <div class="info">
                     <div class="label">Size: <span id="size"></span></div>
-                    <div id="sizer"></div>
+                    <div id="sizer">
+                        <div class="ui-slider-handle"></div>
+                    </div>
                 </div>
                 <div class="info">
                     <div id="library_header">
@@ -115,10 +119,12 @@
                 life.spawn(e.pointerX(), e.pointerY()); 
             });
 
-            new S2.UI.Slider($('sizer'), {
-                value: { min: 3, max: 100, initial: 10, step: 1 },
+            var slider = new Control.Slider($('sizer').down('.ui-slider-handle'), $('sizer'), {
+                range: $R(3, 200),
+                values: $R(3, 200),
                 onChange: function(value) { life.resize(value); $('size').update(value); }
             });
+            slider.setValue(100);
         </script>
     </body>
 </html>
