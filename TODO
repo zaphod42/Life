@@ -2,7 +2,6 @@ Pattern library:
 * Save patterns in a different format (lists of bools?)
 * Select square on world and make into a new pattern (instead of typing in)
 * Tag patterns
-* Search library by tag/author/name
 * Allow mirroring of patterns
 * clockwise rotation of patterns
 * import a large number of already known patterns
@@ -19,7 +18,6 @@ Display:
 Development:
 * GET A TEST SUITE IN PLACE!
 * Change to using async calls for couchdb
-* Stop using Scripty2, it has too many bugs/deficiencies at the moment
 
 Other:
 * Take snapshots and revert to snapshots of the world
