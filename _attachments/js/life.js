@@ -564,16 +564,23 @@ BGProcess.LibraryPattern = function(target, pattern) {
     };
 };
 
-BGProcess.Autocomplete = function(input, completions) {
+BGProcess.Autocomplete = function(input, completions, callback) {
     var input_layout = input.getLayout(),
         listing = new Element('div').addClassName('ui-autocomplete-completions'),
-        completer = new Autocompleter.Local(input, listing, completions, {
+        completer = new Autocompleter.Local(input, listing, completions.collect(function(c) { return c[0] + '<span class="value" style="display:none;">' + c[1] + '</span>'; }), {
+            select: 'value',
             fullSearch: true, 
             onShow: function() {
                 var position_top = input_layout.get('top') + input_layout.get('height') + input_layout.get('padding-top') + input_layout.get('margin-top') + input_layout.get('border-top');
                 var position_left = input_layout.get('left') + input_layout.get('padding-left') + input_layout.get('margin-left') + input_layout.get('border-left');
                 listing.setStyle({ top: position_top, left: position_left });
                 Effect.Appear(listing, { duration: 0.15 });
+            },
+
+            afterUpdateElement: function(element) {
+                if (callback) {
+                    callback(element.value);
+                }
             }
         });
 
@@ -641,7 +648,10 @@ BGProcess.LifeLibraryView = function(args) {
     };
 
     container.insert(listing);
-    container.insert(BGProcess.Autocomplete(search, library.tags().tags.collect(function(tag) { return tag.tag + '(' + tag.count + ')'; })));
+    container.insert(BGProcess.Autocomplete(
+        search, 
+        library.tags().tags.collect(function(tag) { return [tag.tag + ' (' + tag.count + ')', tag.tag]; }),
+        function(term) { self.reset(term); }));
         
     self.reset('');
 
