@@ -14,7 +14,7 @@ function(doc) {
         }
 
         for (var key in keys) {
-            emit(key, doc);
+            emit(key, 1);
         }
     }
 }

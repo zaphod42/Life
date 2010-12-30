@@ -36,11 +36,15 @@
             }
             #library .info { top: 97px; left: 91px; border-top: 2px solid black; }
             #library .rotate { top: 15px; left: 87px; font-size:20px; height: 18px; line-height: 18px; border-bottom: 2px solid black; }
+            #library .ui-autocomplete-completions { width: 135px; }
+            #library .ui-autocomplete-completions ul { width: 135px; }
             
             input, textarea { border: 1px inset #11AA11; background-color: black; color: white; font-family: Fixed, monospace; }
             #library_search { width: 135px; }
             #next_page { float: right; cursor: pointer; }
             #prev_page { float: left; cursor: pointer; }
+
+            .ui-autocomplete-completions { position: absolute; background-color: black; border: 1px solid #33FF33; z-index: 1000; }
 
             .ui-dialog { background: black; border: 1px solid #33FF33; }
             .ui-dialog .ui-dialog-titlebar { cursor: pointer; background: #003300; text-align: center; font-weight: bold; font-size: larger; }
@@ -98,14 +102,12 @@
 
             var library = BGProcess.LifeLibraryView({
                 target: life,
-                library: BGProcess.PatternLibrary()
+                library: BGProcess.PatternLibrary(),
+                search: $('library_search')
             });
             $('library').update(library);
             $('next_page').on('click', library.next_page.bind(library));
             $('prev_page').on('click', library.previous_page.bind(library));
-            $('library_search').on('keyup', function(e, element) {
-                (function() { library.reset(element.getValue()); }).defer();
-            });
 
             $('add_pattern').on('click', library.new_pattern.bind(library));
 

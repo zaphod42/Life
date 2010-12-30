@@ -422,15 +422,24 @@ BGProcess.PatternLibrary = function() {
             var startdoc = continuation || '',
                 start_tag = tag.strip() || '',
                 end_tag = tag.strip() ? tag.strip() + '\u9999' : '',
-                docs = db.view('life/patterns', { reduce: false, startkey_docid: startdoc, startkey: start_tag, endkey: end_tag, limit: MAX_RESULTS });
+                docs = db.view('life/patterns', { reduce: false, include_docs: true, startkey_docid: startdoc, startkey: start_tag, endkey: end_tag, limit: MAX_RESULTS });
                 results = {
                     continuation: docs.rows.length === MAX_RESULTS ? docs.rows.last().id : undefined,
-                    patterns: docs.rows.pluck('value').collect(BGProcess.LifePattern)
+                    patterns: docs.rows.pluck('doc').collect(BGProcess.LifePattern)
                 };
 
             if (results.patterns.length === MAX_RESULTS) {
                 results.patterns.pop();
             }
+
+            return results;
+        },
+
+        tags: function() {
+            var docs = db.view('life/patterns', { group: true, limit: MAX_RESULTS });
+                results = {
+                    tags: docs.rows.collect(function(row) { return { tag: row.key, count: row.value }; })
+                };
 
             return results;
         }
@@ -555,9 +564,29 @@ BGProcess.LibraryPattern = function(target, pattern) {
     };
 };
 
+BGProcess.Autocomplete = function(input, completions) {
+    var input_layout = input.getLayout(),
+        listing = new Element('div').addClassName('ui-autocomplete-completions'),
+        completer = new Autocompleter.Local(input, listing, completions, {
+            fullSearch: true, 
+            onShow: function() {
+                var position_top = input_layout.get('top') + input_layout.get('height') + input_layout.get('padding-top') + input_layout.get('margin-top') + input_layout.get('border-top');
+                var position_left = input_layout.get('left') + input_layout.get('padding-left') + input_layout.get('margin-left') + input_layout.get('border-left');
+                listing.setStyle({ top: position_top, left: position_left });
+                Effect.Appear(listing, { duration: 0.15 });
+            }
+        });
+
+    return {
+        toElement: function() { return listing; },
+        value: function() { return completer.getCurrentEntry(); }
+    };
+};
+
 BGProcess.LifeLibraryView = function(args) {
     var container = new Element('div'),
         listing = new Element('ul'),
+        search = args.search,
         library = args.library,
         target = args.target,
         next, previous = [], current = '', term = '', self;
@@ -577,11 +606,11 @@ BGProcess.LifeLibraryView = function(args) {
             previous = [];
             current = '';
             next = undefined;
-            term = search_term;
-            self.search(current);
+            term = search_term || '';
+            self.search(current, term);
         },
 
-        search: function(continuation) {
+        search: function(continuation, term) {
             var results = library.patterns(continuation, term);
             next = results.continuation;
             self.show(results.patterns);
@@ -596,22 +625,23 @@ BGProcess.LifeLibraryView = function(args) {
             if (next) {
                 previous.push(current);
                 current = next;
-                self.search(current);
+                self.search(current, term);
             }
         },
 
         previous_page: function() {
             if (previous.length) {
                 current = previous.pop();
-                self.search(current);
+                self.search(current, term);
             } else {
                 current = '';
-                self.search('');
+                self.search('', term);
             }
         }
     };
 
     container.insert(listing);
+    container.insert(BGProcess.Autocomplete(search, library.tags().tags.collect(function(tag) { return tag.tag + '(' + tag.count + ')'; })));
         
     self.reset('');
 
