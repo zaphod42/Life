@@ -621,6 +621,9 @@ BGProcess.LifeLibraryView = function(args) {
             var results = library.patterns(continuation, term);
             next = results.continuation;
             self.show(results.patterns);
+            if (args.onChange) {
+                args.onChange(!!next, !!previous.length);
+            }
         },
 
         show: function(patterns) {

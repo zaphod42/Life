@@ -104,7 +104,20 @@
             var library = BGProcess.LifeLibraryView({
                 target: life,
                 library: BGProcess.PatternLibrary(),
-                search: $('library_search')
+                search: $('library_search'),
+                onChange: function(hasNext, hasPrevious) {
+                    if (hasNext) {
+                        $('next_page').show();
+                    } else {
+                        $('next_page').hide();
+                    }
+
+                    if (hasPrevious) {
+                        $('prev_page').show();
+                    } else {
+                        $('prev_page').hide();
+                    }
+                }
             });
             $('library').update(library);
             $('next_page').on('click', library.next_page.bind(library));
