@@ -436,7 +436,7 @@ BGProcess.PatternLibrary = function() {
         },
 
         tags: function() {
-            var docs = db.view('life/patterns', { group: true, limit: MAX_RESULTS });
+            var docs = db.view('life/patterns', { group: true });
                 results = {
                     tags: docs.rows.collect(function(row) { return { tag: row.key, count: row.value }; })
                 };
