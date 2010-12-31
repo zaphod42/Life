@@ -1,60 +1,12 @@
 <html>
     <head>
+        <link rel="stylesheet" href="green-glow.css">
         <script src="js/thirdparty/prototype.js"></script>
         <script src="js/thirdparty/scriptaculous.js"></script>
         <script src="js/thirdparty/livepipe/livepipe.js"></script>
         <script src="js/thirdparty/livepipe/window.js"></script>
         <script src="js/life.js"></script>
         <script src="/_utils/script/couch.js"></script>
-        <style>
-            body { background-color: black; color: #33FF33; font-size: 12px; font-family: Fixed, monospace; }
-            button { background-color: black; color: #33FF33; border: 1px outset #11AA11; font-family: Fixed, monospace; }
-
-            #sidebar { float: left; width: 224px; }
-
-            .info { float: left; }
-            #generations, #population { float: left; margin: 2px; padding: 2px; width: 100px; border: 1px inset #11AA11; }
-
-            #sizer { border: 1px inset #11AA11; width: 219px; height: 10px; position: relative; }
-            #sizer .ui-slider-handle { background-color: #33FF33; width:5px; height: 10px; position: absolute; }
-
-            .pattern { position: relative; float: left; width: 100px; margin: 2px; padding: 1px; border: 1px solid #33FF33; }
-
-            #library_header { margin-top: 20px; }
-            #library_header .label { display: inline; }
-            #library_header #add_pattern { cursor: pointer; }
-            #library ul { width: 219px; height: 370px; list-style: none; margin: 0; padding: 0; }
-            #library .info, #library .rotate { 
-                z-index: 10;
-                cursor: pointer;
-                font-weight: bold;
-                color: black;
-                background-color: #33FF33;
-                border-left: 2px solid black;
-                padding: 1px;
-                position: absolute;
-            }
-            #library .info { top: 97px; left: 91px; border-top: 2px solid black; }
-            #library .rotate { top: 15px; left: 87px; font-size:20px; height: 18px; line-height: 18px; border-bottom: 2px solid black; }
-            #library .ui-autocomplete-completions { width: 135px; }
-            #library .ui-autocomplete-completions ul { width: 135px; }
-            #library .ui-autocomplete-completions .selected { background: #003300; }
-            
-            input, textarea { border: 1px inset #11AA11; background-color: black; color: white; font-family: Fixed, monospace; }
-            #library_search { width: 135px; }
-            #next_page { float: right; cursor: pointer; }
-            #prev_page { float: left; cursor: pointer; }
-
-            .ui-autocomplete-completions { position: absolute; background-color: black; border: 1px solid #33FF33; z-index: 1000; }
-
-            .ui-dialog { background: black; border: 1px solid #33FF33; }
-            .ui-dialog .ui-dialog-titlebar { cursor: pointer; background: #003300; text-align: center; font-weight: bold; font-size: larger; }
-            .ui-dialog .ui-dialog-content dl { padding: 5px; float: left; margin-top: 0; }
-            .ui-dialog .ui-dialog-content dt { font-weight: bold; }
-            .ui-dialog .ui-dialog-content pre { float: right; padding: 5px; text-align: center; }
-            .ui-dialog .ui-dialog-buttonpane { clear: both; text-align: center; }
-
-        </style>
     </head>
     <body>
         <form>
