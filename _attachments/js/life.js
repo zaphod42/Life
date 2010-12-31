@@ -9,6 +9,9 @@ BGProcess.LifeDisplay = function(args) {
         selection;
 
     self = {
+        width: function() { return width; },
+        height: function() { return height; },
+
         location_of: function(x, y) {
             var layout = args.canvas.getLayout();
             return { x: Math.floor((x - layout.get('left')) / width), y: Math.floor((y - layout.get('top')) / height) };
@@ -40,7 +43,6 @@ BGProcess.LifeDisplay = function(args) {
             }
 
             ctx.drawImage(grid_lines, 0, 0);
-            self.drawSelection();
         },
 
         resize: function(new_size) {
@@ -68,51 +70,77 @@ BGProcess.LifeDisplay = function(args) {
                 grid_ctx.lineTo(args.canvas.width, line * height); 
             });
             grid_ctx.stroke();
-        },
+        }
+    };
 
+    self.resize(args.size);
+    return self;
+};
+
+BGProcess.SelectionOverlay = function(args) {
+    var ctx = args.canvas.getContext('2d'),
+        display = args.display,
+        selection,
+        selecting = false,
+        self;
+
+    self = {
         drawSelection: function() {
             if (selection) {
-                var start_location = self.location_of(selection[0][0], selection[0][1]),
-                    end_location = self.location_of(selection[1][0], selection[1][1]),
-                    start_x = Math.min(start_location.x * width, end_location.x * width),
-                    start_y = Math.min(start_location.y * height, end_location.y * height),
-                    selection_width = Math.abs((end_location.x - start_location.x + 1) * width),
-                    selection_height = Math.abs((end_location.y - start_location.y + 1) * height);
+                var geometry = self.geometry();
 
                 ctx.fillStyle = "rgba(0, 51, 0, 0.5)";
                 ctx.strokeStyle = "#33FF33";
-                ctx.fillRect(start_x, start_y, selection_width, selection_height);
-                ctx.strokeRect(start_x, start_y, selection_width, selection_height);
+                ctx.fillRect(geometry.x, geometry.y, geometry.width, geometry.height);
+                ctx.strokeRect(geometry.x, geometry.y, geometry.width, geometry.height);
                 ctx.strokeStyle = "";
             }
         },
 
-        startSelection: function(e) {
-            selection = [[e.pointerX(), e.pointerY()], [e.pointerX(), e.pointerY()]];
-            self.redraw();
+        geometry: function() {
+            var start_location = display.location_of(selection[0][0], selection[0][1]),
+                end_location = display.location_of(selection[1][0], selection[1][1]),
+                width = display.width(),
+                height = display.height(),
+                start_x = Math.min(start_location.x * width, end_location.x * width),
+                start_y = Math.min(start_location.y * height, end_location.y * height),
+                selection_width = Math.abs((end_location.x - start_location.x + 1) * width),
+                selection_height = Math.abs((end_location.y - start_location.y + 1) * height);
+
+            return {
+                x: start_x,
+                y: start_y,
+                width: selection_width,
+                height: selection_height
+            };
         },
 
-        updateSelection: function(e) {
-            if (selection) {
-                selection[1] = [e.pointerX(), e.pointerY()];
-                self.redraw();
+        hasMoved: function() {
+            var geometry = self.geometry();
+            return geometry.width > 10 || geometry.height > 10;
+        },
+
+        startSelection: function(x, y) {
+            selection = [[x, y], [x, y]];
+            selecting = true;
+        },
+
+        updateSelection: function(x, y) {
+            if (selecting) {
+                selection[1] = [x, y];
             }
         },
 
-        endSelection: function(e) {
-            self.clearSelection();
+        endSelection: function(x, y) { 
+            selecting = false; 
+            if (!self.hasMoved()) {
+                selection = undefined;
+            }
         },
-
-        clearSelection: function() {
-            selection = undefined;
-        }
+        clearSelection: function() { selection = undefined; },
+        isSelecting: function() { return selection && self.hasMoved(); }
     };
 
-    args.canvas.on("mousedown", self.startSelection.bind(self));
-    args.canvas.on("mouseup", self.endSelection.bind(self));
-    args.canvas.on("mousemove", self.updateSelection.bind(self));
-
-    self.resize(args.size);
     return self;
 };
 
@@ -284,6 +312,7 @@ BGProcess.GameOfLife = function(args) {
 
 BGProcess.Life = function(args) {
     var display = args.display,
+        selection = args.overlay,
         generation_output = args.generations,
         population_output = args.population,
         
@@ -300,6 +329,7 @@ BGProcess.Life = function(args) {
 
         draw: function() {
             display.draw(grid.grid());
+            selection.drawSelection();
             generation_output.update(generation);
             population_output.update(grid.population());
         },
@@ -324,8 +354,25 @@ BGProcess.Life = function(args) {
         },
 
         spawn: function(x, y) {
-            var location = display.location_of(x, y);
-            grid.toggle(location.x, location.y);
+            if (!selection.isSelecting()) {
+                var location = display.location_of(x, y);
+                grid.toggle(location.x, location.y);
+                self.draw();
+            }
+        },
+
+        startSelection: function(x, y) {
+            selection.startSelection(x, y);
+            self.draw();
+        },
+
+        endSelection: function(x, y) {
+            selection.endSelection(x, y);
+            self.draw();
+        },
+
+        updateSelection: function(x, y) {
+            selection.updateSelection(x, y);
             self.draw();
         },
 

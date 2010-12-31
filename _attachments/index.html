@@ -46,8 +46,10 @@
             <canvas width="800" height="600" id="canvas"></canvas>
         </form>
         <script>
+            var display = BGProcess.LifeDisplay({ canvas: $('canvas'), size: 10 }); 
             var life = BGProcess.Life({
-                display: BGProcess.LifeDisplay({ canvas: $('canvas'), size: 10 }),
+                display: display,
+                overlay: BGProcess.SelectionOverlay({ canvas: $('canvas'), display: display }),
                 generations: $('generations'),
                 population: $('population'),
                 size: 10
@@ -82,10 +84,12 @@
             $('stop').hide();
             $('step').on('click', life.step.bind(life));
             $('reset').on('click', life.reset.bind(life));
-            $('canvas').on('click', function(e) { 
-                var layout = e.element().getLayout();
-                life.spawn(e.pointerX(), e.pointerY()); 
-            });
+
+            $('canvas').on('click', function(e) { life.spawn(e.pointerX(), e.pointerY()); });
+            $('canvas').on("mousedown", function(e) { life.startSelection(e.pointerX(), e.pointerY()); });
+            $('canvas').on("mouseup", function(e) { life.endSelection(e.pointerX(), e.pointerY()); });
+            $('canvas').on("mousemove", function(e) { life.updateSelection(e.pointerX(), e.pointerY()); });
+
 
             var slider = new Control.Slider($('sizer').down('.ui-slider-handle'), $('sizer'), {
                 range: $R(3, 200),
