@@ -84,15 +84,21 @@ BGProcess.SelectionOverlay = function(args) {
         selecting = false,
         self;
 
+    function signum(n) {
+        if (n < 0) { return -1; }
+        if (n === 0) { return 0; }
+        return 1;
+    }
+
     self = {
         drawSelection: function() {
-            if (selection) {
+            if (selection && self.hasMoved()) {
                 var geometry = self.geometry();
 
                 ctx.fillStyle = "rgba(0, 51, 0, 0.5)";
                 ctx.strokeStyle = "#33FF33";
-                ctx.fillRect(geometry.x, geometry.y, geometry.width, geometry.height);
-                ctx.strokeRect(geometry.x, geometry.y, geometry.width, geometry.height);
+                ctx.fillRect(geometry.x, geometry.y, geometry.size, geometry.size);
+                ctx.strokeRect(geometry.x, geometry.y, geometry.size, geometry.size);
                 ctx.strokeStyle = "";
             }
         },
@@ -102,22 +108,24 @@ BGProcess.SelectionOverlay = function(args) {
                 end_location = display.location_of(selection[1][0], selection[1][1]),
                 width = display.width(),
                 height = display.height(),
-                start_x = Math.min(start_location.x * width, end_location.x * width),
-                start_y = Math.min(start_location.y * height, end_location.y * height),
-                selection_width = Math.abs((end_location.x - start_location.x + 1) * width),
-                selection_height = Math.abs((end_location.y - start_location.y + 1) * height);
+                start_x = start_location.x * width,
+                start_y = start_location.y * height,
+                selection_width = (end_location.x - start_location.x + 1) * width,
+                selection_height = (end_location.y - start_location.y + 1) * height,
+                x_dir = signum(selection_width),
+                y_dir = signum(selection_height),
+                size = Math.min(Math.abs(selection_width), Math.abs(selection_height)); 
 
             return {
-                x: start_x,
-                y: start_y,
-                width: selection_width,
-                height: selection_height
+                x: Math.min(start_x, start_x + (x_dir * size)),
+                y: Math.min(start_y, start_y + (y_dir * size)),
+                size: Math.abs(size)
             };
         },
 
         hasMoved: function() {
             var geometry = self.geometry();
-            return geometry.width > 10 || geometry.height > 10;
+            return geometry.size > 10;
         },
 
         startSelection: function(x, y) {
