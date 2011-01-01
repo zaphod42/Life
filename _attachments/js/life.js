@@ -97,8 +97,8 @@ BGProcess.SelectionOverlay = function(args) {
 
                 ctx.fillStyle = "rgba(0, 51, 0, 0.5)";
                 ctx.strokeStyle = "#33FF33";
-                ctx.fillRect(geometry.x, geometry.y, geometry.size, geometry.size);
-                ctx.strokeRect(geometry.x, geometry.y, geometry.size, geometry.size);
+                ctx.fillRect(geometry.x, geometry.y, geometry.width, geometry.height);
+                ctx.strokeRect(geometry.x, geometry.y, geometry.width, geometry.height);
                 ctx.strokeStyle = "";
             }
         },
@@ -110,8 +110,8 @@ BGProcess.SelectionOverlay = function(args) {
                 height = display.height(),
                 start_x = start_location.x * width,
                 start_y = start_location.y * height,
-                selection_width = (end_location.x - start_location.x + 1) * width,
-                selection_height = (end_location.y - start_location.y + 1) * height,
+                selection_width = (end_location.x - start_location.x + 1),
+                selection_height = (end_location.y - start_location.y + 1),
                 x_dir = signum(selection_width),
                 y_dir = signum(selection_height),
                 size = Math.min(Math.abs(selection_width), Math.abs(selection_height)); 
@@ -119,13 +119,14 @@ BGProcess.SelectionOverlay = function(args) {
             return {
                 x: Math.min(start_x, start_x + (x_dir * size)),
                 y: Math.min(start_y, start_y + (y_dir * size)),
-                size: Math.abs(size)
+                width: size * width,
+                height: size * height,
             };
         },
 
         hasMoved: function() {
             var geometry = self.geometry();
-            return geometry.size > 10;
+            return geometry.width > 10;
         },
 
         startSelection: function(x, y) {
