@@ -103,30 +103,38 @@ BGProcess.SelectionOverlay = function(args) {
             }
         },
 
-        geometry: function() {
-            var start_location = display.location_of(selection[0][0], selection[0][1]),
-                end_location = display.location_of(selection[1][0], selection[1][1]),
-                width = display.width(),
-                height = display.height(),
-                start_x = start_location.x * width,
-                start_y = start_location.y * height,
-                selection_width = (end_location.x - start_location.x + 1),
-                selection_height = (end_location.y - start_location.y + 1),
-                x_dir = signum(selection_width),
-                y_dir = signum(selection_height),
-                size = Math.min(Math.abs(selection_width), Math.abs(selection_height)); 
+        selection_geometry: function() {
+            var start = display.location_of(selection[0][0], selection[0][1]),
+                end = display.location_of(selection[1][0], selection[1][1]);
+                width = end.x - start.x + 1,
+                height = end.y - start.y + 1,
+                x_dir = signum(width),
+                y_dir = signum(height),
+                size = Math.min(Math.abs(width), Math.abs(height));
 
             return {
-                x: Math.min(start_x, start_x + (x_dir * size)),
-                y: Math.min(start_y, start_y + (y_dir * size)),
-                width: size * width,
-                height: size * height,
+                x: Math.min(start.x, start.x + (x_dir * size)),
+                y: Math.min(start.y, start.y + (y_dir * size)),
+                size: size
+            };
+        },
+
+        geometry: function() {
+            var geometry = self.selection_geometry(),
+                width = display.width(),
+                height = display.height();
+
+            return {
+                x: geometry.x * width,
+                y: geometry.y * height,
+                width: geometry.size * width,
+                height: geometry.size * height
             };
         },
 
         hasMoved: function() {
-            var geometry = self.geometry();
-            return geometry.width > 10;
+            var geometry = self.selection_geometry();
+            return geometry.size > 1;
         },
 
         startSelection: function(x, y) {
