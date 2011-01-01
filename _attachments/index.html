@@ -59,14 +59,14 @@
                 target: life,
                 library: BGProcess.PatternLibrary(),
                 search: $('library_search'),
-                onChange: function(hasNext, hasPrevious) {
-                    if (hasNext) {
+                on_change: function(has_next, has_previous) {
+                    if (has_next) {
                         $('next_page').show();
                     } else {
                         $('next_page').hide();
                     }
 
-                    if (hasPrevious) {
+                    if (has_previous) {
                         $('prev_page').show();
                     } else {
                         $('prev_page').hide();
@@ -86,9 +86,9 @@
             $('reset').on('click', life.reset.bind(life));
 
             $('canvas').on('click', function(e) { life.spawn(e.pointerX(), e.pointerY()); });
-            $('canvas').on("mousedown", function(e) { life.startSelection(e.pointerX(), e.pointerY()); });
-            $('canvas').on("mouseup", function(e) { life.endSelection(e.pointerX(), e.pointerY()); });
-            $('canvas').on("mousemove", function(e) { life.updateSelection(e.pointerX(), e.pointerY()); });
+            $('canvas').on("mousedown", function(e) { life.start_selection(e.pointerX(), e.pointerY()); });
+            $('canvas').on("mouseup", function(e) { life.end_selection(e.pointerX(), e.pointerY()); });
+            $('canvas').on("mousemove", function(e) { life.update_selection(e.pointerX(), e.pointerY()); });
 
 
             var slider = new Control.Slider($('sizer').down('.ui-slider-handle'), $('sizer'), {

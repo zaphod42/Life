@@ -92,7 +92,7 @@ BGProcess.SelectionOverlay = function(args) {
 
     self = {
         drawSelection: function() {
-            if (selection && self.hasMoved()) {
+            if (selection && self.has_moved()) {
                 var geometry = self.geometry();
 
                 ctx.fillStyle = "rgba(0, 51, 0, 0.5)";
@@ -132,30 +132,30 @@ BGProcess.SelectionOverlay = function(args) {
             };
         },
 
-        hasMoved: function() {
+        has_moved: function() {
             var geometry = self.selection_geometry();
             return geometry.size > 1;
         },
 
-        startSelection: function(x, y) {
+        start_selection: function(x, y) {
             selection = [[x, y], [x, y]];
             selecting = true;
         },
 
-        updateSelection: function(x, y) {
+        update_selection: function(x, y) {
             if (selecting) {
                 selection[1] = [x, y];
             }
         },
 
-        endSelection: function(x, y) { 
+        end_selection: function(x, y) { 
             selecting = false; 
-            if (!self.hasMoved()) {
+            if (!self.has_moved()) {
                 selection = undefined;
             }
         },
-        clearSelection: function() { selection = undefined; },
-        isSelecting: function() { return selection && self.hasMoved(); }
+        clear_selection: function() { selection = undefined; },
+        is_selecting: function() { return selection && self.has_moved(); }
     };
 
     return self;
@@ -371,25 +371,25 @@ BGProcess.Life = function(args) {
         },
 
         spawn: function(x, y) {
-            if (!selection.isSelecting()) {
+            if (!selection.is_selecting()) {
                 var location = display.location_of(x, y);
                 grid.toggle(location.x, location.y);
                 self.draw();
             }
         },
 
-        startSelection: function(x, y) {
-            selection.startSelection(x, y);
+        start_selection: function(x, y) {
+            selection.start_selection(x, y);
             self.draw();
         },
 
-        endSelection: function(x, y) {
-            selection.endSelection(x, y);
+        end_selection: function(x, y) {
+            selection.end_selection(x, y);
             self.draw();
         },
 
-        updateSelection: function(x, y) {
-            selection.updateSelection(x, y);
+        update_selection: function(x, y) {
+            selection.update_selection(x, y);
             self.draw();
         },
 
@@ -734,8 +734,8 @@ BGProcess.LifeLibraryView = function(args) {
             var results = library.patterns(continuation, term);
             next = results.continuation;
             self.show(results.patterns);
-            if (args.onChange) {
-                args.onChange(!!next, !!previous.length);
+            if (args.on_change) {
+                args.on_change(!!next, !!previous.length);
             }
         },
 
