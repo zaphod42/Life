@@ -208,6 +208,19 @@ BGProcess.LifeWorld = function(args) {
             });
         },
 
+        pattern_at: function(location) {
+            var grid = '', 
+                self = this;
+
+            grid = $R(location.y, location.y + location.size - 1).collect(function(y) {
+                return $R(location.x, location.x + location.size - 1).collect(function(x) {
+                    return self.alive(x, y) ? 'O' : '.';
+                }).join('');
+            }).join('\n');
+
+            return BGProcess.LifePattern({ pattern: grid });
+        },
+
         reset: function() {
             this.grid = empty_grid_sized(this.size);
         },
@@ -308,6 +321,10 @@ BGProcess.GameOfLife = function(args) {
             world.blit(x, y, pattern);
         },
 
+        pattern_at: function(location) {
+            return world.pattern_at(location);
+        },
+
         reset: function() {
             world.reset();
             population = 0;
@@ -391,6 +408,10 @@ BGProcess.Life = function(args) {
         update_selection: function(x, y) {
             selection.update_selection(x, y);
             self.draw();
+        },
+
+        selected_pattern: function() {
+            return grid.pattern_at(selection.selection_geometry());
         },
 
         insert: function(x, y, pattern) {
@@ -574,6 +595,8 @@ BGProcess.Dialog = function(args) {
 
     document.body.appendChild(container);
 
+    win.toElement = function() { return container; };
+
     buttons.each(function(button) {
         container.down('.ui-dialog-buttonpane').insert(
             new Element('button', { type: 'button' })
@@ -586,43 +609,40 @@ BGProcess.Dialog = function(args) {
     return win;
 };
 
-BGProcess.NewPatternDialog = function(onSave) {
-    var info_template = new Template('<pre>#{pattern}</pre>' +
-                                     '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>');
-    return BGProcess.Dialog({
-        title: 'Add Pattern Info', 
-        content: info_template.evaluate({
-            name: '<input class="name">',
-            founder: '<input class="founder">',
-            found_date: '<input class="found_date">',
-            pattern: '<textarea rows="10" class="pattern"></textarea>'
-        }),
-        buttons: [{
-            label: 'Save',
-            action: function() {
-                var element = this.container, doc;
-                if($F(element.down('.pattern')).blank()) {
-                    return;
+BGProcess.NewPatternDialog = function(pattern, onSave) {
+    var info_template = new Template('<canvas width="200" height="200"></canvas>' +
+                                     '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>'),
+        dialog = BGProcess.Dialog({
+            title: 'Add Pattern Info', 
+            content: info_template.evaluate({
+                name: '<input class="name">',
+                founder: '<input class="founder">',
+                found_date: '<input class="found_date">'
+            }),
+            buttons: [{
+                label: 'Save',
+                action: function() {
+                    var element = this.container, doc;
+                    doc = { 
+                        founder: $F(element.down('.founder')).strip(),
+                        found_date: $F(element.down('.found_date')).strip(),
+                        pattern: pattern.pattern,
+                        name: $F(element.down('.name')).strip()
+                    };
+                    onSave(BGProcess.LifePattern(doc));
+
+                    this.close();
                 }
-
-                doc = { 
-                    founder: $F(element.down('.founder')).strip(),
-                    found_date: $F(element.down('.found_date')).strip(),
-                    pattern: $F(element.down('.pattern')).strip(),
-                    name: $F(element.down('.name')).strip()
-                };
-                onSave(BGProcess.LifePattern(doc));
-
-                this.close();
-            }
-        },
-        {
-            label: 'Cancel',
-            action: function() {
-                this.close();
-            }
-        }]
-    });
+            },
+            {
+                label: 'Cancel',
+                action: function() {
+                    this.close();
+                }
+            }]
+        });
+    BGProcess.LifeDisplay({ canvas: dialog.toElement().down('canvas'), size: pattern.world().size }).draw(pattern.world().grid);
+    return dialog;
 };
 
 BGProcess.ViewPatternDialog = function(pattern) {
@@ -714,11 +734,11 @@ BGProcess.LifeLibraryView = function(args) {
     self = {
         toElement: function() { return container; },
 
-        new_pattern: function() {
-            var dialog = BGProcess.NewPatternDialog(function(pattern) {
-                library.insert(pattern);
-                self.reset(term);
-            });
+        new_pattern: function(pattern) {
+            var dialog = BGProcess.NewPatternDialog(pattern, function(pattern) {
+                    library.insert(pattern);
+                    self.reset(term);
+                });
             dialog.open();
         },
 

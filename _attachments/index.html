@@ -77,7 +77,9 @@
             $('next_page').on('click', library.next_page.bind(library));
             $('prev_page').on('click', library.previous_page.bind(library));
 
-            $('add_pattern').on('click', library.new_pattern.bind(library));
+            $('add_pattern').on('click', function() {
+                library.new_pattern(life.selected_pattern());
+            });
 
             $('start').on('click', function() { $('start').hide(); $('stop').show(); life.start(); });
             $('stop').on('click', function() { $('start').show(); $('stop').hide(); life.stop(); });
