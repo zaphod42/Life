@@ -649,9 +649,11 @@ BGProcess.NewPatternDialog = function(pattern, onSave) {
 };
 
 BGProcess.ViewPatternDialog = function(pattern) {
-    var info_template = new Template('<pre>#{pattern}</pre>' +
+    var info_template = new Template('<canvas width="200" height="200"></canvas>' +
                                      '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>');
-    return BGProcess.Dialog({ title: 'Pattern Info', content: info_template.evaluate(pattern) });
+        dialog = BGProcess.Dialog({ title: 'Pattern Info', content: info_template.evaluate(pattern) });
+    BGProcess.LifeDisplay({ canvas: dialog.toElement().down('canvas'), size: pattern.world().size }).draw(pattern.world().grid);
+    return dialog;
 };
 
 BGProcess.LibraryPattern = function(target, pattern) {
