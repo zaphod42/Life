@@ -491,9 +491,10 @@ BGProcess.LifePattern = function(args) {
         _id: args._id,
         name: args.name || 'Unknown',
         pattern: normalize(args.pattern),
-        source: args.source,
+        source: args.source || 'Unknown',
         founder: args.founder || 'Unknown',
         found_date: args.found_date || 'Unknown',
+        tags: args.tags || [],
 
         identify: function() {
             if (this._id) {
@@ -510,7 +511,8 @@ BGProcess.LifePattern = function(args) {
                 pattern: this.pattern,
                 source: this.source,
                 founder: this.founder,
-                found_date: this.found_date
+                found_date: this.found_date,
+                tags: this.tags
             };
         },
 
@@ -541,10 +543,6 @@ BGProcess.LifePattern = function(args) {
 };
 
 BGProcess.PatternLibrary = function() {
-    function is_pattern(doc) {
-        return !!doc.pattern;
-    }
-
     var db = new CouchDB('life'),
         MAX_RESULTS = 7;
         
@@ -614,13 +612,14 @@ BGProcess.Dialog = function(args) {
 
 BGProcess.NewPatternDialog = function(pattern, onSave) {
     var info_template = new Template('<canvas width="200" height="200"></canvas>' +
-                                     '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>'),
+                                     '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd><dt>Tags</dt><dd>#{tags}</dd></dl>'),
         dialog = BGProcess.Dialog({
             title: 'Add Pattern Info', 
             content: info_template.evaluate({
                 name: '<input class="name">',
                 founder: '<input class="founder">',
-                found_date: '<input class="found_date">'
+                found_date: '<input class="found_date">',
+                tags: '<input class="tags">'
             }),
             buttons: [{
                 label: 'Save',
@@ -630,7 +629,8 @@ BGProcess.NewPatternDialog = function(pattern, onSave) {
                         founder: $F(element.down('.founder')).strip(),
                         found_date: $F(element.down('.found_date')).strip(),
                         pattern: pattern.pattern,
-                        name: $F(element.down('.name')).strip()
+                        name: $F(element.down('.name')).strip(),
+                        tags: $F(element.down('.tags')).strip().toLowerCase().split(/\s*,\s*/)
                     };
                     onSave(BGProcess.LifePattern(doc));
 
@@ -650,8 +650,13 @@ BGProcess.NewPatternDialog = function(pattern, onSave) {
 
 BGProcess.ViewPatternDialog = function(pattern) {
     var info_template = new Template('<canvas width="200" height="200"></canvas>' +
-                                     '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd></dl>');
-        dialog = BGProcess.Dialog({ title: 'Pattern Info', content: info_template.evaluate(pattern) });
+                                     '<dl><dt>Name<dt><dd>#{name}</dd><dt>Founder</dt><dd>#{founder}</dd><dt>Found on</dt><dd>#{found_date}</dd><dt>Tags</dt><dd>#{tags}</dd></dl>');
+         dialog = BGProcess.Dialog({ title: 'Pattern Info', content: info_template.evaluate({
+             name: pattern.name,
+             founder: pattern.founder,
+             found_date: pattern.found_date,
+             tags: pattern.tags.join(', ')
+         }) });
     BGProcess.LifeDisplay({ canvas: dialog.toElement().down('canvas'), size: pattern.world().size }).draw(pattern.world().grid);
     return dialog;
 };
