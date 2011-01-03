@@ -411,7 +411,10 @@ BGProcess.Life = function(args) {
         },
 
         selected_pattern: function() {
-            return grid.pattern_at(selection.selection_geometry());
+            if (selection.is_selecting()) {
+                return grid.pattern_at(selection.selection_geometry());
+            }
+            return undefined;
         },
 
         insert: function(x, y, pattern) {
@@ -735,10 +738,19 @@ BGProcess.LifeLibraryView = function(args) {
         toElement: function() { return container; },
 
         new_pattern: function(pattern) {
-            var dialog = BGProcess.NewPatternDialog(pattern, function(pattern) {
-                    library.insert(pattern);
-                    self.reset(term);
+            var dialog;
+            if (pattern) {
+                dialog = BGProcess.NewPatternDialog(pattern, function(pattern) {
+                        library.insert(pattern);
+                        self.reset(term);
+                    });
+            } else {
+                dialog = BGProcess.Dialog({
+                    title: 'Info',
+                    content: 'Select a region on the world grid to create a new pattern.'
                 });
+            }
+
             dialog.open();
         },
 

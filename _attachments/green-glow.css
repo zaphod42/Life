@@ -40,6 +40,7 @@ input, textarea { border: 1px inset #11AA11; background-color: black; color: whi
 
 .ui-dialog { background: black; border: 1px solid #33FF33; }
 .ui-dialog .ui-dialog-titlebar { cursor: pointer; background: #003300; text-align: center; font-weight: bold; font-size: larger; }
+.ui-dialog .ui-dialog-content { padding: 5px; }
 .ui-dialog .ui-dialog-content dl { padding: 5px; float: left; margin-top: 0; }
 .ui-dialog .ui-dialog-content dt { font-weight: bold; }
 .ui-dialog .ui-dialog-content pre { float: right; padding: 5px; text-align: center; }
