@@ -542,41 +542,81 @@ BGProcess.LifePattern = function(args) {
     };
 };
 
+BGProcess.CouchDB = function(db, error) {
+    return {
+        save: function(data, cb) {
+            new Ajax.Request('/' + db, {
+                method: 'post',
+                contentType: 'application/json',
+                postBody: Object.toJSON(data),
+                onFailure: error,
+                onSuccess: function(response) {
+                    cb(response.responseText.evalJSON()._id);
+                }
+            });
+        },
+
+        view: function(design, name, params, cb) {
+            var parameters = Object.clone(params);
+            if (!Object.isUndefined(parameters.startkey)) { parameters.startkey = Object.toJSON(parameters.startkey); }
+            if (!Object.isUndefined(parameters.endkey)) { parameters.endkey = Object.toJSON(parameters.endkey); }
+
+            new Ajax.Request('/' + db + '/_design/' + design + '/_view/' + name, {
+                method: 'get',
+                parameters: parameters,
+                onFailure: error,
+                onSuccess: function(response) {
+                    cb(response.responseText.evalJSON());
+                }
+            });
+        }
+    };
+};
+
 BGProcess.PatternLibrary = function() {
-    var db = new CouchDB('life'),
+    var db = BGProcess.CouchDB('life'),
         MAX_RESULTS = 7;
         
     return {
-        insert: function(pattern) {
+        insert: function(pattern, cb) {
             var data = pattern.data();
-            db.save(data);
-            pattern._id = data._id;
+            db.save(data, function(id) {
+                pattern._id = data._id;
+                if(cb) {
+                    cb(pattern);
+                }
+            });
         },
 
-        patterns: function(continuation, tag) {
+        patterns: function(continuation, tag, cb) {
             var startdoc = continuation || '',
                 start_tag = tag.strip() || '',
-                end_tag = tag.strip() ? tag.strip() + '\u9999' : '',
-                docs = db.view('life/patterns', { reduce: false, include_docs: true, startkey_docid: startdoc, startkey: start_tag, endkey: end_tag, limit: MAX_RESULTS });
-                results = {
+                end_tag = tag.strip() ? tag.strip() + '\u9999' : '';
+
+            db.view('life', 'patterns', { 
+                reduce: false, 
+                include_docs: true, 
+                startkey_docid: startdoc, 
+                startkey: start_tag, 
+                endkey: end_tag, 
+                limit: MAX_RESULTS 
+            }, function(docs) {
+                var results = {
                     continuation: docs.rows.length === MAX_RESULTS ? docs.rows.last().id : undefined,
                     patterns: docs.rows.pluck('doc').collect(BGProcess.LifePattern)
                 };
+                if (results.patterns.length === MAX_RESULTS) {
+                    results.patterns.pop();
+                }
 
-            if (results.patterns.length === MAX_RESULTS) {
-                results.patterns.pop();
-            }
-
-            return results;
+                cb(results);
+            });
         },
 
-        tags: function() {
-            var docs = db.view('life/patterns', { group: true });
-                results = {
-                    tags: docs.rows.collect(function(row) { return { tag: row.key, count: row.value }; })
-                };
-
-            return results;
+        tags: function(cb) {
+            db.view('life', 'patterns', { group: true }, function(docs) {
+                cb(docs.rows.collect(function(row) { return { tag: row.key, count: row.value }; }));
+            });
         }
     };
 };
@@ -748,9 +788,8 @@ BGProcess.LifeLibraryView = function(args) {
             var dialog;
             if (pattern) {
                 dialog = BGProcess.NewPatternDialog(pattern, function(pattern) {
-                        library.insert(pattern);
-                        self.reset(term);
-                    });
+                    library.insert(pattern, function() { self.reset(term); });
+                });
             } else {
                 dialog = BGProcess.Dialog({
                     title: 'Info',
@@ -770,12 +809,13 @@ BGProcess.LifeLibraryView = function(args) {
         },
 
         search: function(continuation, term) {
-            var results = library.patterns(continuation, term);
-            next = results.continuation;
-            self.show(results.patterns);
-            if (args.on_change) {
-                args.on_change(!!next, !!previous.length);
-            }
+            library.patterns(continuation, term, function(results) {
+                next = results.continuation;
+                self.show(results.patterns);
+                if (args.on_change) {
+                    args.on_change(!!next, !!previous.length);
+                }
+            });
         },
 
         show: function(patterns) {
@@ -803,10 +843,13 @@ BGProcess.LifeLibraryView = function(args) {
     };
 
     container.insert(listing);
-    container.insert(BGProcess.Autocomplete(
-        search, 
-        library.tags().tags.collect(function(tag) { return [tag.tag + ' (' + tag.count + ')', tag.tag]; }),
-        function(term) { self.reset(term); }));
+
+    library.tags(function(tags) {
+        container.insert(BGProcess.Autocomplete(
+            search, 
+            tags.collect(function(tag) { return [tag.tag + ' (' + tag.count + ')', tag.tag]; }),
+            function(term) { self.reset(term); }));
+    }),
         
     self.reset('');
 
