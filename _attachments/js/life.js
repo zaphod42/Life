@@ -613,8 +613,15 @@ BGProcess.PatternLibrary = function() {
             });
         },
 
-        tags: function(cb) {
-            db.view('life', 'patterns', { group: true }, function(docs) {
+        tags: function(tag, cb) {
+            var start_tag = tag.strip() || '',
+                end_tag = tag.strip() ? tag.strip() + '\u9999' : '';
+
+            db.view('life', 'patterns', { 
+                startkey: start_tag, 
+                endkey: end_tag, 
+                group: true 
+            }, function(docs) {
                 cb(docs.rows.collect(function(row) { return { tag: row.key, count: row.value }; }));
             });
         }
@@ -702,23 +709,23 @@ BGProcess.ViewPatternDialog = function(pattern) {
 };
 
 BGProcess.LibraryPattern = function(target, pattern) {
-    var template = new Template('<li class="pattern" id="pattern_#{_id}"><div class="rotate">&#8634;</div><div class="info">?</div><div class="label">#{name}</div>' +
-                                '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas></li>'),
-        display, dialog, container = new Element('div'),
-        id = 'pattern_' + pattern.identify();
+    var template = new Template('<div class="rotate">&#8634;</div><div class="info">?</div><div class="label">#{name}</div>' +
+                                '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas>'),
+        id = 'pattern_' + pattern.identify(),
+        display, dialog, container = new Element('li', { id: id }).addClassName('pattern');
 
     container.insert(template.evaluate(pattern));
 
-    display = BGProcess.LifeDisplay({ canvas: container.down('#' + id + ' canvas'), size: pattern.world().size });
-    container.down('#' + id).on('mouseenter', function() {
-        container.down('#' + id + ' .info').show();
-        container.down('#' + id + ' .rotate').show();
+    display = BGProcess.LifeDisplay({ canvas: container.down('canvas'), size: pattern.world().size });
+    container.on('mouseenter', function() {
+        container.down('.info').show();
+        container.down('.rotate').show();
     });
-    container.down('#' + id).on('mouseleave', function() {
-        container.down('#' + id + ' .info').hide();
-        container.down('#' + id + ' .rotate').hide();
+    container.on('mouseleave', function() {
+        container.down('.info').hide();
+        container.down('.rotate').hide();
     });
-    container.down('#' + id + ' .info').hide().on('click', function() {
+    container.down('.info').hide().on('click', function() {
         if (dialog) {
             dialog.close();
             dialog.element.remove();
@@ -726,14 +733,14 @@ BGProcess.LibraryPattern = function(target, pattern) {
         dialog = BGProcess.ViewPatternDialog(pattern);
         dialog.open();
     });
-    container.down('#' + id + ' .rotate').hide().on('click', function() {
+    container.down('.rotate').hide().on('click', function() {
         pattern.rotate(); 
         display.draw(pattern.world().grid);
     });
 
     display.draw(pattern.world().grid);
     (function() { 
-        new Draggable(container.down('#' + id + ' canvas'), { 
+        new Draggable(container.down('canvas'), { 
             revert: true,
             onEnd: function(drag, e) { 
                 target.insert(e.pointerX(), e.pointerY(), pattern);
@@ -747,31 +754,49 @@ BGProcess.LibraryPattern = function(target, pattern) {
     };
 };
 
-BGProcess.Autocomplete = function(input, completions, callback) {
-    var input_layout = input.getLayout(),
-        listing = new Element('div').addClassName('ui-autocomplete-completions'),
-        completer = new Autocompleter.Local(input, listing, completions.collect(function(c) { return c[0] + '<span class="value" style="display:none;">' + c[1] + '</span>'; }), {
+BGProcess.Autocomplete = Class.create(Autocompleter.Base, {
+    initialize: function(input, options_callback, select_callback) {
+        this.listing = new Element('div').addClassName('ui-autocomplete-completions'),
+        this.options_callback = options_callback;
+        this.select_callback = select_callback;
+
+        this.baseInitialize(input, this.listing, {
             select: 'value',
             fullSearch: true, 
-            onShow: function() {
-                var position_top = input_layout.get('top') + input_layout.get('height') + input_layout.get('padding-top') + input_layout.get('margin-top') + input_layout.get('border-top');
-                var position_left = input_layout.get('left') + input_layout.get('padding-left') + input_layout.get('margin-left') + input_layout.get('border-left');
-                listing.setStyle({ top: position_top, left: position_left });
-                Effect.Appear(listing, { duration: 0.15 });
-            },
-
+            onShow: this.onShow,
             afterUpdateElement: function(element) {
-                if (callback) {
-                    callback(element.value);
-                }
+                select_callback($F(element));
             }
         });
+    },
 
-    return {
-        toElement: function() { return listing; },
-        value: function() { return completer.getCurrentEntry(); }
-    };
-};
+    onShow: function(input, listing) {
+        var input_layout = input.getLayout(),
+            position_top = input_layout.get('top') + input_layout.get('height') + 
+                           input_layout.get('padding-top') + input_layout.get('margin-top') + input_layout.get('border-top'),
+            position_left = input_layout.get('left') + input_layout.get('padding-left') + 
+                            input_layout.get('margin-left') + input_layout.get('border-left');
+
+        listing.setStyle({ top: position_top, left: position_left });
+        Effect.Appear(listing, { duration: 0.15 });
+    },
+
+    getUpdatedChoices: function() {
+        this.startIndicator();
+
+        this.options_callback(this.getToken(), (function(completions) {
+            var choices = completions.collect(function(c) { 
+                    return '<li>' + c.tag.escapeHTML() + ' (' + c.count + ')' + 
+                        '<span class="value" style="display:none;">' + c.tag.escapeHTML() + '</span>' + '</li>'; 
+                }).join('');
+            this.updateChoices('<ul>' + choices + '</ul>');
+        }).bind(this));
+    },
+
+    toElement: function() { return this.listing; },
+
+    value: function() { return completer.getCurrentEntry(); }
+});
 
 BGProcess.LifeLibraryView = function(args) {
     var container = new Element('div'),
@@ -844,12 +869,10 @@ BGProcess.LifeLibraryView = function(args) {
 
     container.insert(listing);
 
-    library.tags(function(tags) {
-        container.insert(BGProcess.Autocomplete(
-            search, 
-            tags.collect(function(tag) { return [tag.tag + ' (' + tag.count + ')', tag.tag]; }),
-            function(term) { self.reset(term); }));
-    }),
+    container.insert(new BGProcess.Autocomplete(
+        search, 
+        library.tags.bind(library),
+        self.reset.bind(self)));
         
     self.reset('');
 
