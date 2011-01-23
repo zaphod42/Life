@@ -18,15 +18,17 @@ button { background-color: black; color: #33FF33; border: 1px outset #11AA11; fo
 #library .info, #library .rotate { 
     z-index: 10;
     cursor: pointer;
-    font-weight: bold;
-    color: black;
     background-color: #33FF33;
     border-left: 2px solid black;
     padding-top: 1px;
     position: absolute;
+    width: 16px; 
+    height: 16px; 
+    background-repeat: no-repeat; 
+    background-position: 0px 1px; 
 }
-#library .info { top: 97px; left: 91px; border-top: 2px solid black; }
-#library .rotate { top: 14px; left: 84px; width: 16px; height: 16px; background-repeat: no-repeat; background-position: 0px 1px; background-image: url('images/rotate-counterclockwise.png'); border-bottom: 2px solid black; }
+#library .info { top: 95px; left: 84px; background-image: url('images/info.png'); border-top: 2px solid black; }
+#library .rotate { top: 14px; left: 84px; background-image: url('images/rotate-counterclockwise.png'); border-bottom: 2px solid black; }
 #library .ui-autocomplete-completions { width: 135px; }
 #library .ui-autocomplete-completions ul { width: 135px; }
 #library .ui-autocomplete-completions .selected { background: #003300; }

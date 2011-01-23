@@ -709,7 +709,7 @@ BGProcess.ViewPatternDialog = function(pattern) {
 };
 
 BGProcess.LibraryPattern = function(target, pattern) {
-    var template = new Template('<div class="rotate"></div><div class="info">?</div><div class="label">#{name}</div>' +
+    var template = new Template('<div class="rotate"></div><div class="info"></div><div class="label">#{name}</div>' +
                                 '<canvas class="pattern_drawing" style="position:relative;top:0;left:0" width="100" height="100"></canvas>'),
         id = 'pattern_' + pattern.identify(),
         display, dialog, container = new Element('li', { id: id }).addClassName('pattern');
